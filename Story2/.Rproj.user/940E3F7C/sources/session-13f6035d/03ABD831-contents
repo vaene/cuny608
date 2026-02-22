@@ -1,0 +1,1011 @@
+---
+title: "Story 2: Can the FED Control Inflation and Maintain Full Employment (Last 25 Years)"
+author: "Randy Howk"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    number_sections: true
+    keep_tex: true
+    fig_caption: true
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+geometry: "margin=0.5in"
+fontsize: 11pt
+mainfont: "Helvetica"
+monofont: "Menlo"
+linkcolor: blue
+urlcolor: blue
+header-includes:
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,commandchars=\\\{\}}
+  - \usepackage{graphicx}
+  - \usepackage{float}
+  - \usepackage{microtype}
+  - \usepackage{setspace}
+  - \setstretch{1.05}
+  - \setlength{\emergencystretch}{1em}
+  - \makeatletter
+  - \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+  - \def\maxheight{\ifdim\Gin@nat@height>0.85\textheight0.85\textheight\else\Gin@nat@height\fi}
+  - \makeatother
+  - \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+  - \floatplacement{figure}{H}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 10,
+  fig.height = 6,
+  dpi = 300
+)
+```
+
+# Purpose and Research Questions
+
+The Federal Reserve’s dual mandate from Congress is to:
+
+1. Maintain **stable prices** (control inflation)  
+2. Maintain **maximum employment** (low unemployment)
+
+These objectives can conflict, especially around recessions and supply shocks.
+
+**Main Question:**  
+**Has the FED been able to fulfill the mandate given to it by Congress over the last 25 years?**
+
+This analysis is **observational** and focuses on time ordering and consistency with known policy lags. It does **not** claim causal proof.
+
+# Story Development Focus
+
+**Focus Point:** *Visual selection framework + slide messaging technique*  
+
+- Use a small set of repeatable, consistent visuals (simplicity + uniformity)
+- Use clear benchmark lines and shaded “episodes” to emphasize “good vs bad” periods (saliency)
+- Use separate panels rather than dual axes to avoid distortion (fidelity + efficacy)
+- Use a lag-aware view to respect the timing relationship (Fed reacts to inflation; unemployment responds later)
+
+# Data Sources (API)
+
+We pull monthly data for the last 25 years via API:
+
+- **CPI-U (All items, SA)** — BLS series: `CUSR0000SA0`  
+- **Unemployment Rate** — BLS series: `LNS14000000`  
+- **Effective Federal Funds Rate** — FRED series: `FEDFUNDS`
+
+> **API keys (recommended):**  
+> - BLS v2 registration key: set `BLS_KEY` in `.Renviron`  
+> - FRED API key: set `FRED_KEY` in `.Renviron`
+
+---
+
+```{r packages, message=FALSE, warning=FALSE}
+# Packages (auto-install if missing)
+pkgs <- c(
+  "httr2","jsonlite","dplyr","tidyr","lubridate","stringr","ggplot2","scales","patchwork","tibble","readr","purrr","svglite"
+)
+
+to_install <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+if (length(to_install) > 0) install.packages(to_install)
+
+library(httr2)
+library(jsonlite)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(scales)
+library(patchwork)
+library(tibble)
+library(readr)
+library(purrr)
+```
+
+```{r series_colors}
+series_colors <- c(
+  interest_rate = "#2E8B57",   # green
+  inflation_rate = "#C0392B",  # red
+  unemployment_rate = "#1F77B4" # blue
+)
+```
+
+```{r analysis_window}
+analysis_end_date <- floor_date(Sys.Date(), "month")
+analysis_start_date <- analysis_end_date %m-% years(26)
+```
+
+# Theory
+
+The core policy theory is that the Fed can move one tool, the policy interest rate, to influence both sides of its mandate over time:
+
+- Higher interest rates reduce borrowing, spending, and pricing pressure, helping inflation move down.
+- Lower interest rates support borrowing and demand, helping employment recover when labor markets weaken.
+
+In practice, this is not instant. Inflation and unemployment usually respond with lags, and shocks can temporarily break the tradeoff.
+
+Band legend for theory visuals:
+- Light red band = inflation benchmark margin-of-error around the dashed inflation target line.
+- Light blue band = unemployment benchmark margin-of-error around the dashed unemployment benchmark line.
+
+## Theory Slide 1: Interest Rates and Inflation
+
+```{r theory_slide_1, fig.height=6.5}
+theory1 <- tibble::tribble(
+  ~time, ~interest_rate, ~inflation_rate,
+  1, 1.0, 1.2,
+  2, 1.3, 1.6,
+  3, 1.8, 2.4,
+  4, 2.4, 3.3,
+  5, 3.1, 4.2,
+  6, 3.8, 5.0,
+  7, 4.4, 5.6,
+  8, 4.9, 5.4,
+  9, 5.2, 4.8,
+  10, 5.3, 4.0,
+  11, 5.2, 3.2,
+  12, 5.1, 2.6,
+  13, 5.0, 2.2,
+  14, 5.0, 2.0,
+  15, 4.8, 2.0,
+  16, 4.2, 2.2
+)
+
+# Theme used by the first two theory charts (reused for consistency)
+theory_base_theme <- theme_minimal(base_size = 12) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    axis.title = element_text(face = "bold"),
+    legend.title = element_blank(),
+    plot.title = element_text(face = "bold"),
+    axis.line = element_line(linewidth = 0.4, color = "grey30"),
+    axis.ticks = element_line(linewidth = 0.4, color = "grey30")
+  )
+
+# Backwards-compatible name used elsewhere
+low_ink_theme <- theory_base_theme
+
+# Apply theory axis coloring (left = interest rate; right = series-dependent)
+apply_theory_axes <- function(p, right_key) {
+  p + theme(
+    axis.text.y.left  = element_text(color = unname(series_colors["interest_rate"])),
+    axis.title.y.left = element_text(color = unname(series_colors["interest_rate"])),
+    axis.text.y.right  = element_text(color = unname(series_colors[right_key])),
+    axis.title.y.right = element_text(color = unname(series_colors[right_key]))
+  )
+}
+
+p_theory1 <- ggplot(theory1, aes(x = time)) +
+  geom_rect(
+    xmin = -Inf, xmax = Inf,
+    ymin = 1.5, ymax = 2.5,
+    fill = "#F4A3A3", alpha = 0.25,
+    inherit.aes = FALSE
+  ) +
+  geom_smooth(aes(y = interest_rate, color = "Interest Rate"), method = "loess", se = FALSE, span = 0.5, linewidth = 1) +
+  geom_smooth(aes(y = inflation_rate, color = "Inflation"), method = "loess", se = FALSE, span = 0.5, linewidth = 1) +
+    geom_hline(yintercept = 2.0, linetype = "dashed", linewidth = 0.9, color = unname(series_colors["inflation_rate"])) +
+scale_x_continuous(
+    breaks = theory1$time,
+    labels = paste("T", theory1$time)
+  ) +
+  scale_y_continuous(
+    name = "Interest Rate (%)",
+    labels = label_percent(scale = 1),
+    sec.axis = sec_axis(~ ., name = "Inflation (%)", labels = label_percent(scale = 1))
+  ) +
+  scale_color_manual(
+    values = c(
+      "Interest Rate" = unname(series_colors["interest_rate"]),
+      "Inflation" = unname(series_colors["inflation_rate"])
+    ),
+    breaks = c("Interest Rate", "Inflation")
+  ) +
+  labs(
+    title = "Theory (Best Case) Inverse: Interest Rate Hikes Lead Inflation Lower With a Lag",
+    subtitle = "Light red band: inflation benchmark margin-of-error around the dashed target line",
+    x = "T",
+    color = NULL
+  ) +
+  low_ink_theme +
+  theme(
+    axis.text.y.left = element_text(color = unname(series_colors["interest_rate"])),
+    axis.title.y.left = element_text(color = unname(series_colors["interest_rate"])),
+    axis.text.y.right = element_text(color = unname(series_colors["inflation_rate"])),
+    axis.title.y.right = element_text(color = unname(series_colors["inflation_rate"]))
+  )
+
+p_theory1
+```
+
+## Theory Slide 2: Interest Rates and Unemployment
+
+```{r theory_slide_2, fig.height=6.5}
+theory2 <- tibble::tribble(
+  ~time, ~interest_rate, ~unemployment_rate,
+  1, 5.3, 3.7,
+  2, 5.3, 4.2,
+  3, 5.2, 5.0,
+  4, 5.1, 6.1,
+  5, 4.9, 7.3,
+  6, 4.4, 8.2,
+  7, 3.8, 8.6,
+  8, 3.0, 8.1,
+  9, 2.2, 7.2,
+  10, 1.6, 6.0,
+  11, 1.2, 5.0,
+  12, 1.0, 4.3,
+  13, 1.0, 3.9,
+  14, 0.9, 3.7,
+  15, 0.9, 3.7,
+  16, 2.2, 4.0
+)
+
+p_theory2 <- ggplot(theory2, aes(x = time)) +
+  geom_rect(
+    xmin = -Inf, xmax = Inf,
+    ymin = 4.0, ymax = 5.0,
+    fill = "#9DC7F5", alpha = 0.25,
+    inherit.aes = FALSE
+  ) +
+  geom_smooth(aes(y = interest_rate, color = "Interest Rate"), method = "loess", se = FALSE, span = 0.5, linewidth = 1) +
+  geom_smooth(aes(y = unemployment_rate, color = "Unemployment"), method = "loess", se = FALSE, span = 0.5, linewidth = 1) +
+    geom_hline(yintercept = 4.5, linetype = "dashed", linewidth = 0.9, color = unname(series_colors["unemployment_rate"])) +
+scale_x_continuous(
+    breaks = theory2$time,
+    labels = paste("T", theory2$time)
+  ) +
+  scale_y_continuous(
+    name = "Interest Rate (%)",
+    labels = label_percent(scale = 1),
+    sec.axis = sec_axis(~ ., name = "Unemployment (%)", labels = label_percent(scale = 1))
+  ) +
+  scale_color_manual(
+    values = c(
+      "Interest Rate" = unname(series_colors["interest_rate"]),
+      "Unemployment" = unname(series_colors["unemployment_rate"])
+    ),
+    breaks = c("Interest Rate", "Unemployment")
+  ) +
+  labs(
+    title = "Theory (Best Case) Direct: Unemployment Rises First, Then Rate Cuts Follow and Unemployment Falls with a lag",
+    subtitle = "Light blue band: unemployment benchmark margin-of-error around the dashed benchmark line",
+    x = "Time",
+    color = NULL
+  ) +
+  low_ink_theme +
+  theme(
+    axis.text.y.left = element_text(color = unname(series_colors["interest_rate"])),
+    axis.title.y.left = element_text(color = unname(series_colors["interest_rate"])),
+    axis.text.y.right = element_text(color = unname(series_colors["unemployment_rate"])),
+    axis.title.y.right = element_text(color = unname(series_colors["unemployment_rate"]))
+  )
+
+p_theory2
+```
+
+# API Helpers
+
+```{r api_helpers}
+bls_fetch <- function(series_ids, start_year, end_year, bls_key = Sys.getenv("BLS_KEY")) {
+  url <- "https://api.bls.gov/publicAPI/v2/timeseries/data/"
+  body <- list(
+    seriesid = series_ids,
+    startyear = as.character(start_year),
+    endyear   = as.character(end_year)
+  )
+  if (nzchar(bls_key)) body$registrationkey <- bls_key
+
+  resp <- request(url) |>
+    req_method("POST") |>
+    req_body_json(body) |>
+    req_perform()
+
+  dat <- jsonlite::fromJSON(resp_body_string(resp), simplifyVector = TRUE)
+
+  # Fail loudly if BLS rejected the request
+  if (!is.null(dat$status) && dat$status != "REQUEST_SUCCEEDED") {
+    msg <- paste(c(dat$message, dat$Results$errors), collapse = " | ")
+    stop("BLS API request failed: ", msg, call. = FALSE)
+  }
+
+  series <- dat$Results$series
+
+  # Normalize to a list of series objects: each has $seriesID and $data
+  series_list <- NULL
+
+  if (is.data.frame(series)) {
+    # Common when fromJSON simplifies; 'data' becomes a list-column
+    series_list <- lapply(seq_len(nrow(series)), function(i) {
+      list(seriesID = series$seriesID[i], data = series$data[[i]])
+    })
+  } else if (is.list(series)) {
+    # Already list-of-series
+    series_list <- series
+  } else {
+    stop("Unexpected BLS payload: Results$series is neither data.frame nor list.", call. = FALSE)
+  }
+
+  out <- lapply(series_list, function(s) {
+    d <- s$data
+    tibble::tibble(
+      series_id = s$seriesID,
+      year      = as.integer(d$year),
+      period    = d$period,
+      value     = as.numeric(d$value)
+    )
+  }) |>
+    dplyr::bind_rows()
+
+  out |>
+    dplyr::filter(stringr::str_detect(period, "^M\\d\\d$")) |>
+    dplyr::mutate(
+      month = as.integer(stringr::str_remove(period, "M")),
+      date  = as.Date(sprintf("%04d-%02d-01", year, month))
+    ) |>
+    dplyr::select(series_id, date, value) |>
+    dplyr::arrange(series_id, date)
+}
+
+
+fred_fetch <- function(series_id, start_date, end_date, fred_key = Sys.getenv("FRED_KEY")) {
+  if (nzchar(fred_key)) {
+    url <- "https://api.stlouisfed.org/fred/series/observations"
+
+    resp <- request(url) |>
+      req_url_query(
+        series_id = series_id,
+        api_key = fred_key,
+        file_type = "json",
+        observation_start = as.character(start_date),
+        observation_end   = as.character(end_date),
+        frequency = "m"
+      ) |>
+      req_perform()
+
+    dat <- fromJSON(resp_body_string(resp))
+    return(
+      tibble(
+        series_id = series_id,
+        date = as.Date(dat$observations$date),
+        value = as.numeric(na_if(dat$observations$value, "."))
+      ) |>
+        arrange(date)
+    )
+  }
+
+  # Fallback endpoint if FRED_KEY is not set.
+  csv_url <- sprintf(
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=%s&cosd=%s&coed=%s",
+    series_id, as.character(start_date), as.character(end_date)
+  )
+
+  read.csv(csv_url) |>
+    tibble::as_tibble() |>
+    rename(date = DATE, value = !!series_id) |>
+    mutate(
+      series_id = series_id,
+      date = as.Date(date),
+      value = as.numeric(value)
+    ) |>
+    select(series_id, date, value) |>
+    arrange(date)
+}
+```
+
+# Episodes to Highlight (Good vs Bad Performance)
+
+These shaded windows act like “chapters” in the story.
+
+```{r episodes}
+episodes <- tibble::tribble(
+  ~label, ~start, ~end,
+  "Dot-com / 9-11 easing", as.Date("2001-01-01"), as.Date("2003-12-01"),
+  "GFC: cuts + unemployment spike", as.Date("2007-12-01"), as.Date("2010-12-01"),
+  "Long expansion (low U, low-ish infl)", as.Date("2015-12-01"), as.Date("2019-12-01"),
+  "Pandemic shock", as.Date("2020-03-01"), as.Date("2021-06-01"),
+  "Inflation surge + fastest hikes", as.Date("2021-07-01"), analysis_end_date
+)
+
+shade <- function(p) {
+  p + geom_rect(
+    data = episodes,
+    aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+    inherit.aes = FALSE,
+    alpha = 0.08
+  )
+}
+```
+
+# Pull and Prepare Data (Last 25 Years)
+
+```{r fetch_data}
+end_date <- analysis_end_date
+start_date <- analysis_start_date
+
+start_year <- year(start_date)
+end_year   <- year(end_date)
+
+# CSV cache paths
+dir.create("data", showWarnings = FALSE)
+df_cache_path <- file.path("data", "story2_final_data.csv")
+bls_cache_path <- file.path("data", "story2_bls_raw.csv")
+ffr_cache_path <- file.path("data", "story2_fedfunds_raw.csv")
+cpi_cache_path <- file.path("data", "story2_cpi_fred_raw.csv")
+unemp_cache_path <- file.path("data", "story2_unrate_fred_raw.csv")
+
+# Reuse cached final data if available; otherwise download and cache all raw pulls
+if (file.exists(df_cache_path)) {
+  message("Loading cached data from ", df_cache_path)
+  df <- readr::read_csv(df_cache_path, show_col_types = FALSE) |>
+    mutate(date = as.Date(date))
+} else {
+  # --- Primary source requested by assignment: BLS for CPI + Unemployment ---
+  bls <- bls_fetch(
+    series_ids = c("CUSR0000SA0", "LNS14000000"),
+    start_year = start_year,
+    end_year   = end_year
+  )
+  readr::write_csv(bls, bls_cache_path)
+
+  # FRED: Fed Funds (always needed)
+  ffr <- fred_fetch("FEDFUNDS", start_date, end_date)
+  readr::write_csv(ffr, ffr_cache_path)
+
+  # If BLS returns a shorter window, fall back to FRED-hosted BLS series.
+  bls_max_date <- suppressWarnings(max(bls$date, na.rm = TRUE))
+
+  if (is.finite(bls_max_date) && bls_max_date < as.Date("2023-12-01")) {
+    message("BLS returned data only through ", bls_max_date,
+            ". Falling back to FRED for CPI & unemployment to complete the window.")
+
+    cpi_fred <- fred_fetch("CPIAUCSL", start_date, end_date) |> rename(cpi = value)
+    un_fred  <- fred_fetch("UNRATE",   start_date, end_date) |> rename(unemp = value)
+
+    readr::write_csv(cpi_fred, cpi_cache_path)
+    readr::write_csv(un_fred, unemp_cache_path)
+
+    df <- cpi_fred |>
+      full_join(un_fred, by = "date") |>
+      full_join(ffr |> rename(ffr = value), by = "date") |>
+      arrange(date)
+  } else {
+    df <- bls |>
+      pivot_wider(names_from = series_id, values_from = value) |>
+      rename(cpi = CUSR0000SA0, unemp = LNS14000000) |>
+      full_join(ffr |> rename(ffr = value), by = "date") |>
+      arrange(date)
+  }
+}
+
+# Derived measures (used throughout)
+df <- df |>
+  mutate(
+    infl_yoy = 100 * (cpi / lag(cpi, 12) - 1),
+    d_ffr = ffr - lag(ffr, 1),
+    d_ffr_12m = ffr - lag(ffr, 12)
+  )
+
+readr::write_csv(df, df_cache_path)
+```
+
+# Visual Theme (Uniformity + Simplicity)
+
+```{r theme}
+base_theme <- theme_minimal(base_size = 12) +
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold"),
+    strip.text = element_text(face = "bold")
+  )
+```
+
+# Visualization 1 — Mandate Scorecard Timeline (No Dual Axis)
+
+This stacks three aligned time series (inflation, unemployment, policy rate).
+
+```{r viz_timeline, fig.height=9}
+infl_target <- 2.0
+infl_moe <- 0.5
+unemp_target <- 4.0
+unemp_moe <- 0.5
+
+p_infl <- ggplot(df, aes(date, infl_yoy)) +
+  geom_rect(
+    xmin = -Inf, xmax = Inf,
+    ymin = infl_target - infl_moe, ymax = infl_target + infl_moe,
+    fill = "#F4A3A3", alpha = 0.25,
+    inherit.aes = FALSE
+  ) +
+  geom_hline(yintercept = 2, linetype = "dashed", alpha = 0.6) +
+  geom_line(na.rm = TRUE, color = unname(series_colors["inflation_rate"])) +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  labs(title = "Inflation (CPI YoY) vs Fed mandate benchmark", y = "CPI YoY", x = NULL) +
+  base_theme
+p_infl <- shade(p_infl)
+
+p_un <- ggplot(df, aes(date, unemp)) +
+  geom_rect(
+    xmin = -Inf, xmax = Inf,
+    ymin = unemp_target - unemp_moe, ymax = unemp_target + unemp_moe,
+    fill = "#9DC7F5", alpha = 0.25,
+    inherit.aes = FALSE
+  ) +
+  geom_hline(yintercept = 4, linetype = "dashed", alpha = 0.6) +
+  geom_line(na.rm = TRUE, color = unname(series_colors["unemployment_rate"])) +
+  labs(title = "Unemployment rate", y = "%", x = NULL) +
+  base_theme
+p_un <- shade(p_un)
+
+p_ffr <- ggplot(df, aes(date, ffr)) +
+  geom_line(na.rm = TRUE, color = unname(series_colors["interest_rate"])) +
+  labs(title = "Policy tool: Effective Fed Funds Rate", y = "%", x = NULL) +
+  base_theme
+p_ffr <- shade(p_ffr)
+
+
+p_timeline <- (p_infl / p_un / p_ffr) + plot_annotation(
+  title = "Fed mandate scorecard (25 years): inflation, unemployment, and the policy lever",
+  theme = theme(plot.title = element_text(face="bold", size=14))
+)
+p_timeline
+```
+
+```{r viz_timeline_stacked_26y, fig.height=5.2}
+overall_stack <- df |>
+  dplyr::filter(!is.na(infl_yoy), !is.na(unemp)) |>
+  dplyr::mutate(
+    emp_ok = unemp <= 5,
+    infl_ok = infl_yoy >= 1 & infl_yoy <= 3,
+    both_ok = emp_ok & infl_ok
+  ) |>
+  dplyr::summarise(
+    Employment = mean(emp_ok),
+    Inflation = mean(infl_ok),
+    Both = mean(both_ok)
+  ) |>
+  tidyr::pivot_longer(cols = dplyr::everything(), names_to = "metric", values_to = "ok") |>
+  dplyr::mutate(not_ok = 1 - ok) |>
+  tidyr::pivot_longer(c(ok, not_ok), names_to = "status", values_to = "share") |>
+  dplyr::mutate(
+    status = dplyr::if_else(status == "ok", "OK", "Not OK"),
+    metric = factor(metric, levels = c("Employment", "Inflation", "Both"))
+  )
+
+p_timeline_stacked_26y <- ggplot(overall_stack, aes(x = metric, y = share, fill = status)) +
+  geom_col(width = 0.65) +
+  geom_text(
+    aes(label = scales::percent(share, accuracy = 0.1)),
+    position = position_stack(vjust = 0.5),
+    size = 3.6
+  ) +
+  scale_fill_manual(values = c("OK" = "#BFE7BF", "Not OK" = "#F6B3B3")) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(
+    title = "26-year mandate benchmark share (monthly): Employment, Inflation, and Both",
+    x = NULL,
+    y = "Share of months",
+    fill = NULL
+  ) +
+  low_ink_theme +
+  theme(legend.position = "bottom")
+
+p_timeline_stacked_26y
+```
+
+# Period deep-dives 
+
+For each period of interest, we reproduce **two dual-axis line charts**:
+
+1) **Fed Funds vs Unemployment** (dashed = unemployment, right axis)  
+2) **Fed Funds vs Inflation (CPI YoY)** (dashed = inflation, right axis)
+
+Each chart **rescales the right axis per-period** so the two lines are visually comparable and the relationship is clear.
+
+```{r 30_dual_axis_helpers, message=FALSE, warning=FALSE}
+# Dual-axis helper: plot Fed Funds on left axis, rescaled series on right axis
+dual_axis_plot <- function(d, y2, title, y1_limits = NULL, y2_range_override = NULL) {
+  # y2: one of c("unemp","infl_yoy")
+  d <- d |>
+    dplyr::select(date, ffr, !!rlang::sym(y2)) |>
+    dplyr::filter(!is.na(ffr), !is.na(.data[[y2]]))
+
+  # Map to Theory chart naming + color scheme keys
+  y2_label <- dplyr::case_when(
+    y2 == "unemp" ~ "Unemployment",
+    y2 == "infl_yoy" ~ "Inflation",
+    TRUE ~ y2
+  )
+
+  right_key <- dplyr::case_when(
+    y2 == "unemp" ~ "unemployment_rate",
+    y2 == "infl_yoy" ~ "inflation_rate",
+    TRUE ~ "inflation_rate"
+  )
+
+  # Targets (for context against the mandate)
+  infl_target <- 2.0      # 2% long-run inflation target
+  unemp_target <- 4.5     # simple benchmark (varies over time)
+  infl_moe <- 0.5         # +/- 0.5 pp visual margin of error
+  unemp_moe <- 0.5        # +/- 0.5 pp visual margin of error
+
+  # Per-period scaling so the relationship is visible (ranges differ by period)
+  rng1 <- range(d$ffr, na.rm = TRUE)
+  rng2 <- if (!is.null(y2_range_override)) y2_range_override else range(d[[y2]], na.rm = TRUE)
+
+  if (diff(rng2) == 0) {
+    scale <- 1
+    shift <- 0
+  } else {
+    scale <- diff(rng1) / diff(rng2)
+    shift <- rng1[1] - rng2[1] * scale
+  }
+
+  d <- d |> dplyr::mutate(y2_scaled = .data[[y2]] * scale + shift)
+
+  # Convert targets onto the left axis so they plot correctly with the dual-axis transform
+  y2_target <- if (y2 == "infl_yoy") infl_target else if (y2 == "unemp") unemp_target else NA_real_
+  y2_target_scaled <- y2_target * scale + shift
+  y2_moe <- if (y2 == "infl_yoy") infl_moe else if (y2 == "unemp") unemp_moe else NA_real_
+  y2_moe_scaled <- y2_moe * scale
+
+  p <- ggplot(d, aes(x = date)) +
+    {if (!is.na(y2_target_scaled) && !is.na(y2_moe_scaled)) geom_rect(
+        xmin = -Inf, xmax = Inf,
+        ymin = y2_target_scaled - y2_moe_scaled,
+        ymax = y2_target_scaled + y2_moe_scaled,
+        fill = if (y2 == "infl_yoy") "#F4A3A3" else "#9DC7F5",
+        alpha = 0.25,
+        inherit.aes = FALSE
+      )} +
+    geom_line(aes(y = ffr, color = "Interest Rate"), linewidth = 1) +
+    geom_line(aes(y = y2_scaled, color = y2_label), linewidth = 1) +
+    {if (!is.na(y2_target_scaled)) geom_hline(
+        yintercept = y2_target_scaled,
+        linewidth = 0.9,
+        linetype = "dashed",
+        color = unname(series_colors[right_key])
+      )} +
+    scale_color_manual(
+      values = c(
+        "Interest Rate" = unname(series_colors["interest_rate"]),
+        "Inflation"     = unname(series_colors["inflation_rate"]),
+        "Unemployment"  = unname(series_colors["unemployment_rate"])
+      )
+    ) +
+    scale_y_continuous(
+      name = "Interest Rate (%)",
+      labels = label_number(accuracy = 0.1),
+      sec.axis = sec_axis(
+        ~ (. - shift) / scale,
+        name = paste0(y2_label, ifelse(y2 == "unemp", " (%)", " (CPI YoY %)")),
+        labels = label_number(accuracy = 0.1)
+      )
+    ) +
+    labs(title = title, x = NULL, color = NULL) +
+    low_ink_theme +
+    theme(legend.position = "bottom")
+
+  if (!is.null(y1_limits)) {
+    p <- p + coord_cartesian(ylim = y1_limits)
+  }
+
+  apply_theory_axes(p, right_key)
+}
+
+# Periods of interest (adjust here if needed)
+periods <- tibble::tribble(
+  ~period, ~start, ~end,
+  "Dot-com bust (2000-2003)", as.Date("2000-01-01"), as.Date("2003-12-01"),
+  "Financial crisis + aftermath (2008-2012)", as.Date("2008-01-01"), as.Date("2012-12-01"),
+  "COVID era (2020-2023)", as.Date("2020-01-01"), as.Date("2023-12-01")
+)
+
+# Period helper: 100% stacked bars for Employment / Inflation / Both
+period_stacked_pct_plot <- function(data, start_date, end_date, period_label) {
+  d <- data |>
+    dplyr::filter(date >= start_date, date <= end_date, !is.na(infl_yoy), !is.na(unemp)) |>
+    dplyr::mutate(
+      emp_ok = unemp <= 5,
+      infl_ok = infl_yoy >= 1 & infl_yoy <= 3,
+      both_ok = emp_ok & infl_ok
+    )
+
+  bar_df <- tibble::tibble(
+    metric = c("Employment", "Inflation", "Both"),
+    ok = c(mean(d$emp_ok), mean(d$infl_ok), mean(d$both_ok))
+  ) |>
+    dplyr::mutate(not_ok = 1 - ok) |>
+    tidyr::pivot_longer(c(ok, not_ok), names_to = "status", values_to = "share") |>
+    dplyr::mutate(
+      status = dplyr::if_else(status == "ok", "OK", "Not OK"),
+      metric = factor(metric, levels = c("Employment", "Inflation", "Both"))
+    )
+
+  ggplot(bar_df, aes(x = metric, y = share, fill = status)) +
+    geom_col(width = 0.65) +
+    geom_text(
+      aes(label = scales::percent(share, accuracy = 0.1)),
+      position = position_stack(vjust = 0.5),
+      size = 3.6
+    ) +
+    scale_fill_manual(values = c("OK" = "#BFE7BF", "Not OK" = "#F6B3B3")) +
+    scale_y_continuous(
+      labels = scales::percent_format(accuracy = 1),
+      limits = c(0, 1),
+      expand = expansion(mult = c(0, 0.02))
+    ) +
+    labs(
+      title = paste0(period_label, ": Percentage of months meeting benchmarks"),
+      x = NULL,
+      y = "Share of months",
+      fill = NULL
+    ) +
+    low_ink_theme +
+    theme(legend.position = "bottom")
+}
+```
+
+## Dot-com bust (2000-2003)
+
+```{r 31_dotcom_unemp, fig.height=5.5}
+d <- df |> filter(date >= as.Date("2001-01-01"), date <= periods$end[1])
+
+p_dot_u <- dual_axis_plot(
+  d, y2 = "unemp",
+  title = "Dot-com bust (2000-2003): Fed Funds vs Unemployment",
+  y1_limits = c(0, 7.1)
+)
+p_dot_u
+```
+
+```{r 32_dotcom_infl, fig.height=5.5}
+d <- df |> filter(date >= as.Date("2001-01-01"), date <= periods$end[1])
+
+p_dot_i <- dual_axis_plot(
+  d, y2 = "infl_yoy",
+  title = "Dot-com bust (2001-2003): Fed Funds vs Inflation",
+  y1_limits = c(0, 7.1)
+)
+p_dot_i
+```
+
+```{r 32b_dotcom_stacked, fig.height=5}
+p_dot_stack <- period_stacked_pct_plot(
+  data = df,
+  start_date = as.Date("2001-01-01"),
+  end_date = periods$end[1],
+  period_label = "Dot-com bust (2000-2003)"
+)
+p_dot_stack
+```
+
+## Financial crisis + aftermath (2008-2012)
+
+```{r 41_gfc_unemp, fig.height=5.5}
+d <- df |> filter(date >= periods$start[2], date <= periods$end[2])
+
+p_gfc_u <- dual_axis_plot(
+  d, y2 = "unemp",
+  title = "Financial crisis + aftermath (2008-2012): Fed Funds vs Unemployment"
+)
+p_gfc_u
+```
+
+```{r 42_gfc_infl, fig.height=5.5}
+d <- df |> filter(date >= periods$start[2], date <= periods$end[2])
+
+p_gfc_i <- dual_axis_plot(
+  d, y2 = "infl_yoy",
+  title = "Financial crisis + aftermath (2008-2012): Fed Funds vs Inflation (CPI YoY)"
+)
+p_gfc_i
+```
+
+```{r 42b_gfc_stacked, fig.height=5}
+p_gfc_stack <- period_stacked_pct_plot(
+  data = df,
+  start_date = periods$start[2],
+  end_date = periods$end[2],
+  period_label = "Financial crisis + aftermath (2008-2012)"
+)
+p_gfc_stack
+```
+
+## COVID era (2020-2023)
+
+```{r 51_covid_unemp, fig.height=5.5}
+d <- df |> filter(date >= periods$start[3], date <= periods$end[3])
+
+p_covid_u <- dual_axis_plot(
+  d, y2 = "unemp",
+  title = "COVID era (2020-2023): Fed Funds vs Unemployment"
+)
+p_covid_u
+```
+
+```{r 52_covid_infl, fig.height=5.5}
+d <- df |> filter(date >= periods$start[3], date <= periods$end[3])
+
+p_covid_i <- dual_axis_plot(
+  d, y2 = "infl_yoy",
+  title = "COVID era (2020-2023): Fed Funds vs Inflation (CPI YoY)"
+)
+p_covid_i
+```
+
+```{r 52b_covid_stacked, fig.height=5}
+p_covid_stack <- period_stacked_pct_plot(
+  data = df,
+  start_date = periods$start[3],
+  end_date = periods$end[3],
+  period_label = "COVID era (2020-2023)"
+)
+p_covid_stack
+```
+
+# Mandate Scorecard (Quantitative Answer)
+
+We use a simple benchmark definition for "meeting both objectives":
+
+- Inflation near target: `1% to 3%` CPI YoY (2% +/- 1pp band)  
+- Labor market strong: unemployment `<= 5%`
+
+```{r mandate_scorecard}
+scorecard <- df |>
+  filter(!is.na(infl_yoy), !is.na(unemp)) |>
+  mutate(
+    infl_ok = infl_yoy >= 1 & infl_yoy <= 3,
+    unemp_ok = unemp <= 5,
+    dual_ok = infl_ok & unemp_ok
+  ) |>
+  summarise(
+    months_total = n(),
+    months_dual_ok = sum(dual_ok),
+    pct_dual_ok = 100 * mean(dual_ok),
+    months_infl_ok = sum(infl_ok),
+    pct_infl_ok = 100 * mean(infl_ok),
+    months_unemp_ok = sum(unemp_ok),
+    pct_unemp_ok = 100 * mean(unemp_ok)
+  )
+
+knitr::kable(
+  scorecard |>
+    mutate(across(starts_with("pct_"), ~round(.x, 1))),
+  caption = "25-year mandate scorecard (monthly observations)"
+)
+
+period_scorecard <- purrr::map_dfr(seq_len(nrow(periods)), function(i) {
+  p <- periods[i, ]
+  df |>
+    filter(date >= p$start, date <= p$end, !is.na(infl_yoy), !is.na(unemp)) |>
+    mutate(
+      infl_ok = infl_yoy >= 1 & infl_yoy <= 3,
+      unemp_ok = unemp <= 5,
+      dual_ok = infl_ok & unemp_ok
+    ) |>
+    summarise(
+      period = p$period,
+      months_total = n(),
+      months_dual_ok = sum(dual_ok),
+      pct_dual_ok = 100 * mean(dual_ok),
+      months_infl_ok = sum(infl_ok),
+      pct_infl_ok = 100 * mean(infl_ok),
+      months_unemp_ok = sum(unemp_ok),
+      pct_unemp_ok = 100 * mean(unemp_ok)
+    )
+})
+
+knitr::kable(
+  period_scorecard |>
+    mutate(across(starts_with("pct_"), ~round(.x, 1))),
+  caption = "Mandate scorecard by period (monthly observations)"
+)
+```
+
+# Visualization 2 — Tradeoff Map (Inflation vs Unemployment)
+
+This “quadrant” view highlights when the U.S. was closest to the dual mandate (bottom-left).
+
+```{r viz_scatter, fig.height=7}
+df2 <- df |>
+  filter(!is.na(infl_yoy), !is.na(unemp)) |>
+  mutate(
+    era = case_when(
+      date <  as.Date("2008-01-01") ~ "2000–2007",
+      date <  as.Date("2016-01-01") ~ "2008–2015",
+      date <  as.Date("2020-01-01") ~ "2016–2019",
+      date <  as.Date("2022-01-01") ~ "2020–2021",
+      TRUE                          ~ "2022–present"
+    )
+  )
+
+p_scatter <- ggplot(df2, aes(unemp, infl_yoy, color = era)) +
+  geom_hline(yintercept = 2, linetype="dashed", alpha=0.6) +
+  geom_vline(xintercept = 4, linetype="dashed", alpha=0.6) +
+  geom_point(alpha = 0.6, size = 1.6) +
+  labs(
+    title = "Inflation vs unemployment: when did we get the 'good quadrant'?",
+    x = "Unemployment rate (%)",
+    y = "CPI YoY (%)",
+    color = "Era"
+  ) +
+  base_theme
+
+p_scatter
+```
+
+# Conclusion: Has the Fed Fulfilled the Mandate?
+
+**Short answer:** **Partially, but not consistently.**
+
+- The timeline and scatter show extended periods where one objective was met while the other was missed.  
+- The strongest dual-mandate performance appears in the late-2010s expansion.  
+- Major misses occurred in the Great Recession and pandemic labor shock (employment miss) and in 2021-2023 (inflation miss).  
+
+Overall, over the full 25-year window, the Fed appears able to **restore** the mandate after shocks, but not to keep both goals satisfied continuously.
+
+# Key Takeaways (Draft Slide Text)
+
+Use these as the narration overlay for your Manim slides:
+
+- **Best “dual mandate” stretch:** the late 2010s, when unemployment was low and inflation was not persistently elevated.  
+- **Employment misses:** recessions and shocks (2008–2010; 2020) when unemployment spikes regardless of inflation levels.  
+- **Inflation miss:** 2021–2023 surge (inflation far above a 2% benchmark while unemployment stayed low).  
+- **Timing matters:** the Fed reacts to inflation data; unemployment tends to move with a lag after costs/financing tighten.
+
+# Export Plots for Manim
+
+```{r export_plots_svg, message=FALSE, warning=FALSE}
+dir.create("plots_svg", showWarnings = FALSE)
+
+save_svg <- function(plot_obj, filename, width, height) {
+  ggsave(
+    filename = file.path("plots_svg", paste0(filename, ".svg")),
+    plot = plot_obj,
+    width = width,
+    height = height,
+    units = "in",
+    device = "svg"
+  )
+}
+
+# Theory
+save_svg(p_theory1, "theory_slide_1_interest_vs_inflation", 10, 6.5)
+save_svg(p_theory2, "theory_slide_2_interest_vs_unemployment", 10, 6.5)
+
+# Visualization 1
+save_svg(p_infl, "viz1_inflation_panel", 12, 3.2)
+save_svg(p_un, "viz1_unemployment_panel", 12, 3.2)
+save_svg(p_ffr, "viz1_fedfunds_panel", 12, 3.2)
+save_svg(p_timeline, "viz1_timeline_combined", 12, 9)
+save_svg(p_timeline_stacked_26y, "viz1_stacked_26y", 10, 5.2)
+
+# Period deep-dives
+save_svg(p_dot_u, "period_dotcom_ffr_vs_unemployment", 10, 5.5)
+save_svg(p_dot_i, "period_dotcom_ffr_vs_inflation", 10, 5.5)
+save_svg(p_dot_stack, "period_dotcom_stacked_pct", 10, 5)
+
+save_svg(p_gfc_u, "period_gfc_ffr_vs_unemployment", 10, 5.5)
+save_svg(p_gfc_i, "period_gfc_ffr_vs_inflation", 10, 5.5)
+save_svg(p_gfc_stack, "period_gfc_stacked_pct", 10, 5)
+
+save_svg(p_covid_u, "period_covid_ffr_vs_unemployment", 10, 5.5)
+save_svg(p_covid_i, "period_covid_ffr_vs_inflation", 10, 5.5)
+save_svg(p_covid_stack, "period_covid_stacked_pct", 10, 5)
+
+# Visualization 2
+save_svg(p_scatter, "viz2_tradeoff_scatter", 12, 7)
+```
+
+
