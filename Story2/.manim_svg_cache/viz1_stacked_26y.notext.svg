@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" width="720.00pt" height="374.40pt" viewBox="0 0 720.00 374.40">
+<ns0:g class="svglite">
+<ns0:defs>
+  <ns0:style type="text/css">
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  </ns0:style>
+</ns0:defs>
+<ns0:rect width="100%" height="100%" style="stroke: none; fill: #FFFFFF;" />
+<ns0:defs>
+  <ns0:clipPath id="cpMC4wMHw3MjAuMDB8MC4wMHwzNzQuNDA=">
+    <ns0:rect x="0.00" y="0.00" width="720.00" height="374.40" />
+  </ns0:clipPath>
+</ns0:defs>
+<ns0:g clip-path="url(#cpMC4wMHw3MjAuMDB8MC4wMHwzNzQuNDA=)">
+<ns0:rect x="0.00" y="0.000000000000057" width="720.00" height="374.40" style="stroke-width: 1.16; stroke: none; fill: #FFFFFF;" />
+</ns0:g>
+<ns0:defs>
+  <ns0:clipPath id="cpNTIuOTd8NzE0LjAyfDI1LjI4fDMwOS45OA==">
+    <ns0:rect x="52.97" y="25.28" width="661.05" height="284.70" />
+  </ns0:clipPath>
+</ns0:defs>
+<ns0:g clip-path="url(#cpNTIuOTd8NzE0LjAyfDI1LjI4fDMwOS45OA==)">
+<ns0:polyline points="52.97,309.98 714.02,309.98 " style="stroke-width: 1.16; stroke: #EBEBEB; stroke-linecap: butt;" />
+<ns0:polyline points="52.97,240.20 714.02,240.20 " style="stroke-width: 1.16; stroke: #EBEBEB; stroke-linecap: butt;" />
+<ns0:polyline points="52.97,170.42 714.02,170.42 " style="stroke-width: 1.16; stroke: #EBEBEB; stroke-linecap: butt;" />
+<ns0:polyline points="52.97,100.64 714.02,100.64 " style="stroke-width: 1.16; stroke: #EBEBEB; stroke-linecap: butt;" />
+<ns0:polyline points="52.97,30.86 714.02,30.86 " style="stroke-width: 1.16; stroke: #EBEBEB; stroke-linecap: butt;" />
+<ns0:rect x="109.78" y="172.76" width="134.28" height="137.22" style="stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #BFE7BF;" />
+<ns0:rect x="109.78" y="30.86" width="134.28" height="141.89" style="stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F6B3B3;" />
+<ns0:rect x="316.36" y="143.82" width="134.28" height="166.16" style="stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #BFE7BF;" />
+<ns0:rect x="316.36" y="30.86" width="134.28" height="112.95" style="stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F6B3B3;" />
+<ns0:rect x="522.94" y="232.50" width="134.28" height="77.48" style="stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #BFE7BF;" />
+<ns0:rect x="522.94" y="30.86" width="134.28" height="201.63" style="stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F6B3B3;" />
+</ns0:g>
+<ns0:g clip-path="url(#cpMC4wMHw3MjAuMDB8MC4wMHwzNzQuNDA=)">
+<ns0:polyline points="52.97,309.98 52.97,25.28 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:polyline points="49.98,309.98 52.97,309.98 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:polyline points="49.98,240.20 52.97,240.20 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:polyline points="49.98,170.42 52.97,170.42 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:polyline points="49.98,100.64 52.97,100.64 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:polyline points="49.98,30.86 52.97,30.86 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:polyline points="52.97,309.98 714.02,309.98 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:polyline points="176.92,312.97 176.92,309.98 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:polyline points="383.49,312.97 383.49,309.98 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:polyline points="590.07,312.97 590.07,309.98 " style="stroke-width: 0.85; stroke: #4D4D4D; stroke-linecap: butt;" />
+<ns0:rect x="335.35" y="345.94" width="15.73" height="15.73" style="stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F6B3B3;" />
+<ns0:rect x="396.05" y="345.94" width="15.73" height="15.73" style="stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #BFE7BF;" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>

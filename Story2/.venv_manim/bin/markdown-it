@@ -1,0 +1,6 @@
+#!/Users/randyhowk/Documents/CUNY/608/Story2/.venv_manim/bin/python3.12
+import sys
+from markdown_it.cli.parse import main
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(main())
