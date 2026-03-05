@@ -1,0 +1,201 @@
+geoid,name,st_geoid,st_name,intent,period,count_sup,rate,rate_m,rate_m_ci,data_as_of,ttm_date_range
+20165,Rush County,20,Kansas,Drug_OD,2020,0,0,0,NA,2026-02-11T00:00:00Z,NA
+49009,Daggett County,49,Utah,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48031,Blanco County,48,Texas,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+31169,Thayer County,31,Nebraska,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+13037,Calhoun County,13,Georgia,Drug_OD,2020,0,0,0,NA,2026-02-11T00:00:00Z,NA
+16061,Lewis County,16,Idaho,FA_Deaths,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+19029,Cass County,19,Iowa,FA_Suicide,2022,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48369,Parmer County,48,Texas,Drug_OD,2020,0,0,0,NA,2026-02-11T00:00:00Z,NA
+56015,Goshen County,56,Wyoming,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48197,Hardeman County,48,Texas,Drug_OD,2023,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48307,McCulloch County,48,Texas,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+16003,Adams County,16,Idaho,Drug_OD,2023,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48119,Delta County,48,Texas,Drug_OD,2024,0,0,0,NA,2026-02-11T00:00:00Z,NA
+18027,Daviess County,18,Indiana,Drug_OD,2020,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48301,Loving County,48,Texas,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48319,Mason County,48,Texas,FA_Deaths,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+20163,Rooks County,20,Kansas,Drug_OD,2023,0,0,0,NA,2026-02-11T00:00:00Z,NA
+55049,Iowa County,55,Wisconsin,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+31037,Colfax County,31,Nebraska,Drug_OD,2022,0,0,0,NA,2026-02-11T00:00:00Z,NA
+39019,Carroll County,39,Ohio,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+13037,Calhoun County,13,Georgia,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+31171,Thomas County,31,Nebraska,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+29087,Holt County,29,Missouri,Drug_OD,2023,0,0,0,NA,2026-02-11T00:00:00Z,NA
+13109,Evans County,13,Georgia,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48063,Camp County,48,Texas,FA_Deaths,2022,0,0,0,NA,2026-02-11T00:00:00Z,NA
+29153,Ozark County,29,Missouri,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+30027,Fergus County,30,Montana,Drug_OD,2022,0,0,0,NA,2026-02-11T00:00:00Z,NA
+40007,Beaver County,40,Oklahoma,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48023,Baylor County,48,Texas,Drug_OD,2024,0,0,0,NA,2026-02-11T00:00:00Z,NA
+20027,Clay County,20,Kansas,FA_Deaths,2022,0,0,0,NA,2026-02-11T00:00:00Z,NA
+19027,Carroll County,19,Iowa,Drug_OD,2023,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48235,Irion County,48,Texas,Drug_OD,2023,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48431,Sterling County,48,Texas,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+20193,Thomas County,20,Kansas,Drug_OD,2020,0,0,0,NA,2026-02-11T00:00:00Z,NA
+30059,Meagher County,30,Montana,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+30101,Toole County,30,Montana,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+05039,Dallas County,05,Arkansas,Drug_OD,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+08049,Grand County,08,Colorado,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+31127,Nemaha County,31,Nebraska,Drug_OD,2020,0,0,0,NA,2026-02-11T00:00:00Z,NA
+01105,Perry County,01,Alabama,Drug_OD,2022,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48095,Concho County,48,Texas,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+20025,Clark County,20,Kansas,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+31113,Logan County,31,Nebraska,Drug_OD,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+32011,Eureka County,32,Nevada,Drug_OD,2024,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48387,Red River County,48,Texas,FA_Homicide,2019,0,0,0,NA,2026-02-11T00:00:00Z,NA
+48421,Sherman County,48,Texas,FA_Suicide,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+12039,Gadsden County,12,Florida,Drug_OD,2020,1-9,16.3,1,10.3-27.6,2026-02-11T00:00:00Z,NA
+12039,Gadsden County,12,Florida,Drug_OD,2022,13,30,0,NA,2026-02-11T00:00:00Z,NA
+12039,Gadsden County,12,Florida,Drug_OD,TTM,1-9,8.8,1,5.0-16.6,2026-02-11T00:00:00Z,"August, 2024 to July, 2025"
+12041,Gilchrist County,12,Florida,Drug_OD,2021,1-9,23.4,1,13.5-43.3,2026-02-11T00:00:00Z,NA
+12041,Gilchrist County,12,Florida,FA_Suicide,2023,1-9,18.1,1,11.4-30.3,2026-02-11T00:00:00Z,NA
+12043,Glades County,12,Florida,All_Suicide,2019,1-9,18.7,1,13.6-26.4,2026-02-11T00:00:00Z,NA
+12043,Glades County,12,Florida,Drug_OD,2020,1-9,29.7,1,17.8-52.6,2026-02-11T00:00:00Z,NA
+12045,Gulf County,12,Florida,All_Homicide,2022,0,0,0,NA,2026-02-11T00:00:00Z,NA
+12045,Gulf County,12,Florida,All_Homicide,2024,1-9,8.9,1,3.5-27.2,2026-02-11T00:00:00Z,NA
+12045,Gulf County,12,Florida,FA_Homicide,2024,1-9,5.5,1,1.9-20.2,2026-02-11T00:00:00Z,NA
+12047,Hamilton County,12,Florida,All_Homicide,TTM,1-9,14,1,6.2-38.9,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12047,Hamilton County,12,Florida,All_Suicide,2021,1-9,22.4,1,15.2-34.0,2026-02-11T00:00:00Z,NA
+12049,Hardee County,12,Florida,All_Homicide,2022,1-9,6.9,1,3.0-19.4,2026-02-11T00:00:00Z,NA
+12049,Hardee County,12,Florida,All_Suicide,2024,1-9,17.1,1,11.9-25.3,2026-02-11T00:00:00Z,NA
+12049,Hardee County,12,Florida,Drug_OD,2022,1-9,18.8,1,10.8-34.8,2026-02-11T00:00:00Z,NA
+12049,Hardee County,12,Florida,FA_Deaths,2019,1-9,15,1,9.1-25.9,2026-02-11T00:00:00Z,NA
+12049,Hardee County,12,Florida,FA_Homicide,TTM,0,0,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12049,Hardee County,12,Florida,FA_Suicide,2019,1-9,9.9,1,6.1-17.2,2026-02-11T00:00:00Z,NA
+12051,Hendry County,12,Florida,All_Homicide,2021,1-9,3.7,1,1.6-10.1,2026-02-11T00:00:00Z,NA
+12051,Hendry County,12,Florida,FA_Deaths,2023,1-9,15.2,1,9.8-25.0,2026-02-11T00:00:00Z,NA
+12051,Hendry County,12,Florida,FA_Deaths,TTM,1-9,14.5,1,9.6-23.0,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12051,Hendry County,12,Florida,FA_Suicide,2024,1-9,-999,1,-999,2026-02-11T00:00:00Z,NA
+12053,Hernando County,12,Florida,FA_Suicide,2023,32,15,0,NA,2026-02-11T00:00:00Z,NA
+12055,Highlands County,12,Florida,FA_Deaths,2021,19,18.4,0,NA,2026-02-11T00:00:00Z,NA
+12055,Highlands County,12,Florida,FA_Homicide,2019,1-9,5.4,1,3.2-11.8,2026-02-11T00:00:00Z,NA
+12055,Highlands County,12,Florida,FA_Homicide,2022,1-9,2.7,1,1.3-7.0,2026-02-11T00:00:00Z,NA
+12055,Highlands County,12,Florida,FA_Suicide,2019,15,14.1,0,NA,2026-02-11T00:00:00Z,NA
+12057,Hillsborough County,12,Florida,FA_Homicide,2024,63,4.1,0,NA,2026-02-11T00:00:00Z,NA
+12057,Hillsborough County,12,Florida,FA_Suicide,TTM,128,8.3,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12059,Holmes County,12,Florida,All_Suicide,2022,1-9,17.7,1,11.5-28.1,2026-02-11T00:00:00Z,NA
+12059,Holmes County,12,Florida,FA_Deaths,2020,1-9,15.1,1,8.4-28.6,2026-02-11T00:00:00Z,NA
+12059,Holmes County,12,Florida,FA_Suicide,TTM,1-9,16.8,1,9.9-29.8,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12061,Indian River County,12,Florida,All_Homicide,2019,1-9,5.1,1,3.1-9.9,2026-02-11T00:00:00Z,NA
+12061,Indian River County,12,Florida,All_Homicide,2022,1-9,2.9,1,1.6-6.5,2026-02-11T00:00:00Z,NA
+12061,Indian River County,12,Florida,Drug_OD,TTM,32,18.8,0,NA,2026-02-11T00:00:00Z,"August, 2024 to July, 2025"
+12061,Indian River County,12,Florida,FA_Homicide,2021,1-9,2.5,1,1.3-6.1,2026-02-11T00:00:00Z,NA
+12061,Indian River County,12,Florida,FA_Suicide,2024,18,10.6,0,NA,2026-02-11T00:00:00Z,NA
+12063,Jackson County,12,Florida,All_Homicide,2019,1-9,7.2,1,3.7-16.5,2026-02-11T00:00:00Z,NA
+12063,Jackson County,12,Florida,All_Homicide,2023,1-9,6.9,1,3.6-16.6,2026-02-11T00:00:00Z,NA
+12063,Jackson County,12,Florida,FA_Suicide,2021,1-9,13.2,1,9.0-20.4,2026-02-11T00:00:00Z,NA
+12065,Jefferson County,12,Florida,FA_Suicide,2019,1-9,8.3,1,5.0-14.9,2026-02-11T00:00:00Z,NA
+12067,Lafayette County,12,Florida,All_Homicide,2022,1-9,8.5,1,3.0-28.8,2026-02-11T00:00:00Z,NA
+12069,Lake County,12,Florida,All_Suicide,2021,59,14.9,0,NA,2026-02-11T00:00:00Z,NA
+12069,Lake County,12,Florida,Drug_OD,2019,89,24.2,0,NA,2026-02-11T00:00:00Z,NA
+12069,Lake County,12,Florida,FA_Homicide,2020,20,5.2,0,NA,2026-02-11T00:00:00Z,NA
+12071,Lee County,12,Florida,All_Suicide,2024,126,15.1,0,NA,2026-02-11T00:00:00Z,NA
+12071,Lee County,12,Florida,FA_Homicide,2020,30,3.9,0,NA,2026-02-11T00:00:00Z,NA
+12071,Lee County,12,Florida,FA_Homicide,2022,30,3.6,0,NA,2026-02-11T00:00:00Z,NA
+12071,Lee County,12,Florida,FA_Suicide,2019,58,7.5,0,NA,2026-02-11T00:00:00Z,NA
+12071,Lee County,12,Florida,FA_Suicide,2022,110,13.4,0,NA,2026-02-11T00:00:00Z,NA
+12071,Lee County,12,Florida,FA_Suicide,TTM,88,10.5,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12073,Leon County,12,Florida,All_Homicide,2019,20,6.8,0,NA,2026-02-11T00:00:00Z,NA
+12073,Leon County,12,Florida,All_Suicide,2020,42,14.3,0,NA,2026-02-11T00:00:00Z,NA
+12073,Leon County,12,Florida,Drug_OD,TTM,34,11.5,0,NA,2026-02-11T00:00:00Z,"August, 2024 to July, 2025"
+12073,Leon County,12,Florida,FA_Deaths,2023,48,16.2,0,NA,2026-02-11T00:00:00Z,NA
+12073,Leon County,12,Florida,FA_Deaths,TTM,53,17.9,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12075,Levy County,12,Florida,All_Suicide,2022,1-9,20.1,1,14.2-29.3,2026-02-11T00:00:00Z,NA
+12075,Levy County,12,Florida,Drug_OD,2024,1-9,19.4,1,12.2-33.2,2026-02-11T00:00:00Z,NA
+12075,Levy County,12,Florida,FA_Suicide,2022,1-9,14.7,1,9.5-24.0,2026-02-11T00:00:00Z,NA
+12075,Levy County,12,Florida,FA_Suicide,2024,1-9,14.5,1,9.5-23.4,2026-02-11T00:00:00Z,NA
+12077,Liberty County,12,Florida,All_Homicide,2019,1-9,7.1,1,2.8-21.7,2026-02-11T00:00:00Z,NA
+12077,Liberty County,12,Florida,FA_Deaths,2022,0,0,0,NA,2026-02-11T00:00:00Z,NA
+12077,Liberty County,12,Florida,FA_Homicide,2021,1-9,7,1,2.4-25.4,2026-02-11T00:00:00Z,NA
+12077,Liberty County,12,Florida,FA_Homicide,2024,0,0,0,NA,2026-02-11T00:00:00Z,NA
+12079,Madison County,12,Florida,Drug_OD,2019,1-9,13.7,1,7.8-26.1,2026-02-11T00:00:00Z,NA
+12079,Madison County,12,Florida,FA_Deaths,2021,1-9,-999,1,-999,2026-02-11T00:00:00Z,NA
+12083,Marion County,12,Florida,All_Homicide,2023,34,8.3,0,NA,2026-02-11T00:00:00Z,NA
+12083,Marion County,12,Florida,FA_Suicide,2020,49,13,0,NA,2026-02-11T00:00:00Z,NA
+12083,Marion County,12,Florida,FA_Suicide,2022,55,13.9,0,NA,2026-02-11T00:00:00Z,NA
+12085,Martin County,12,Florida,Drug_OD,2024,31,19,0,NA,2026-02-11T00:00:00Z,NA
+12086,Miami-Dade County,12,Florida,All_Homicide,2024,161,6,0,NA,2026-02-11T00:00:00Z,NA
+12086,Miami-Dade County,12,Florida,FA_Deaths,2022,324,12.1,0,NA,2026-02-11T00:00:00Z,NA
+12087,Monroe County,12,Florida,All_Homicide,2022,1-9,4.6,1,2.2-11.6,2026-02-11T00:00:00Z,NA
+12087,Monroe County,12,Florida,FA_Suicide,TTM,1-9,6.1,1,3.4-11.5,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12089,Nassau County,12,Florida,FA_Suicide,TTM,16,15.8,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12091,Okaloosa County,12,Florida,All_Suicide,TTM,37,16.9,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12091,Okaloosa County,12,Florida,FA_Deaths,2021,45,21.1,0,NA,2026-02-11T00:00:00Z,NA
+12093,Okeechobee County,12,Florida,All_Homicide,2022,1-9,3.8,1,1.7-10.5,2026-02-11T00:00:00Z,NA
+12093,Okeechobee County,12,Florida,All_Homicide,2023,1-9,5.1,1,2.4-13.4,2026-02-11T00:00:00Z,NA
+12093,Okeechobee County,12,Florida,All_Suicide,2021,10,25,0,NA,2026-02-11T00:00:00Z,NA
+12093,Okeechobee County,12,Florida,Drug_OD,2024,1-9,15.7,1,9.8-27.2,2026-02-11T00:00:00Z,NA
+12095,Orange County,12,Florida,All_Homicide,2022,113,7.8,0,NA,2026-02-11T00:00:00Z,NA
+12095,Orange County,12,Florida,All_Suicide,2024,159,10.8,0,NA,2026-02-11T00:00:00Z,NA
+12095,Orange County,12,Florida,Drug_OD,2021,411,28.8,0,NA,2026-02-11T00:00:00Z,NA
+12095,Orange County,12,Florida,FA_Homicide,2021,78,5.5,0,NA,2026-02-11T00:00:00Z,NA
+12097,Osceola County,12,Florida,All_Suicide,2024,38,8.7,0,NA,2026-02-11T00:00:00Z,NA
+12097,Osceola County,12,Florida,FA_Deaths,2021,38,9.4,0,NA,2026-02-11T00:00:00Z,NA
+12097,Osceola County,12,Florida,FA_Homicide,2021,14,3.5,0,NA,2026-02-11T00:00:00Z,NA
+12097,Osceola County,12,Florida,FA_Suicide,2024,23,5.3,0,NA,2026-02-11T00:00:00Z,NA
+12097,Osceola County,12,Florida,FA_Suicide,TTM,22,5,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12099,Palm Beach County,12,Florida,All_Suicide,TTM,224,14.6,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12099,Palm Beach County,12,Florida,FA_Suicide,TTM,111,7.2,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12101,Pasco County,12,Florida,FA_Suicide,2024,73,11.5,0,NA,2026-02-11T00:00:00Z,NA
+12103,Pinellas County,12,Florida,All_Suicide,2019,189,19.4,0,NA,2026-02-11T00:00:00Z,NA
+12103,Pinellas County,12,Florida,FA_Suicide,2020,89,9.3,0,NA,2026-02-11T00:00:00Z,NA
+12105,Polk County,12,Florida,All_Suicide,TTM,125,15.3,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12105,Polk County,12,Florida,Drug_OD,2022,209,26.5,0,NA,2026-02-11T00:00:00Z,NA
+12107,Putnam County,12,Florida,All_Homicide,2019,1-9,4,1,2.0-9.5,2026-02-11T00:00:00Z,NA
+12107,Putnam County,12,Florida,FA_Deaths,2019,11,14.8,0,NA,2026-02-11T00:00:00Z,NA
+12107,Putnam County,12,Florida,FA_Suicide,2023,13,17.1,0,NA,2026-02-11T00:00:00Z,NA
+12111,St. Lucie County,12,Florida,All_Homicide,TTM,11,2.9,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12111,St. Lucie County,12,Florida,All_Suicide,2022,68,18.9,0,NA,2026-02-11T00:00:00Z,NA
+12111,St. Lucie County,12,Florida,All_Suicide,2023,59,15.8,0,NA,2026-02-11T00:00:00Z,NA
+12111,St. Lucie County,12,Florida,FA_Deaths,TTM,42,11.2,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12111,St. Lucie County,12,Florida,FA_Homicide,2020,21,6.3,0,NA,2026-02-11T00:00:00Z,NA
+12111,St. Lucie County,12,Florida,FA_Suicide,2023,39,10.4,0,NA,2026-02-11T00:00:00Z,NA
+12113,Santa Rosa County,12,Florida,All_Suicide,2024,53,26.1,0,NA,2026-02-11T00:00:00Z,NA
+12113,Santa Rosa County,12,Florida,FA_Suicide,2019,21,11.4,0,NA,2026-02-11T00:00:00Z,NA
+12113,Santa Rosa County,12,Florida,FA_Suicide,2022,34,17.2,0,NA,2026-02-11T00:00:00Z,NA
+12115,Sarasota County,12,Florida,All_Homicide,2020,10,2.3,0,NA,2026-02-11T00:00:00Z,NA
+12115,Sarasota County,12,Florida,FA_Suicide,2019,42,9.7,0,NA,2026-02-11T00:00:00Z,NA
+12117,Seminole County,12,Florida,FA_Homicide,2024,10,2.1,0,NA,2026-02-11T00:00:00Z,NA
+12117,Seminole County,12,Florida,FA_Suicide,2021,46,9.8,0,NA,2026-02-11T00:00:00Z,NA
+12119,Sumter County,12,Florida,All_Suicide,2022,27,18.7,0,NA,2026-02-11T00:00:00Z,NA
+12119,Sumter County,12,Florida,FA_Homicide,TTM,1-9,1.7,1,0.8-4.6,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12121,Suwannee County,12,Florida,FA_Homicide,2021,1-9,4.6,1,2.0-13.3,2026-02-11T00:00:00Z,NA
+12121,Suwannee County,12,Florida,FA_Suicide,2019,1-9,12.2,1,7.6-20.9,2026-02-11T00:00:00Z,NA
+12125,Union County,12,Florida,Drug_OD,2022,1-9,29.6,1,16.5-56.6,2026-02-11T00:00:00Z,NA
+12127,Volusia County,12,Florida,All_Suicide,2022,98,16.9,0,NA,2026-02-11T00:00:00Z,NA
+12129,Wakulla County,12,Florida,All_Suicide,2020,1-9,15.2,1,9.9-24.2,2026-02-11T00:00:00Z,NA
+12129,Wakulla County,12,Florida,FA_Homicide,2024,1-9,5.4,1,2.3-16.1,2026-02-11T00:00:00Z,NA
+12131,Walton County,12,Florida,All_Suicide,TTM,23,26.6,0,NA,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+12131,Walton County,12,Florida,Drug_OD,2020,20,26.3,0,NA,2026-02-11T00:00:00Z,NA
+12131,Walton County,12,Florida,FA_Deaths,2021,15,18.7,0,NA,2026-02-11T00:00:00Z,NA
+12131,Walton County,12,Florida,FA_Suicide,2021,10,12.5,0,NA,2026-02-11T00:00:00Z,NA
+12133,Washington County,12,Florida,All_Homicide,2020,1-9,8.8,1,3.9-24.1,2026-02-11T00:00:00Z,NA
+12133,Washington County,12,Florida,All_Suicide,2023,1-9,20,1,13.4-30.7,2026-02-11T00:00:00Z,NA
+12133,Washington County,12,Florida,FA_Suicide,2024,10,39.1,0,NA,2026-02-11T00:00:00Z,NA
+13001,Appling County,13,Georgia,All_Suicide,2020,1-9,16,1,10.8-24.4,2026-02-11T00:00:00Z,NA
+13001,Appling County,13,Georgia,Drug_OD,2022,1-9,18.9,1,10.6-36.1,2026-02-11T00:00:00Z,NA
+13001,Appling County,13,Georgia,FA_Deaths,2022,1-9,17.5,1,10.2-31.6,2026-02-11T00:00:00Z,NA
+13003,Atkinson County,13,Georgia,All_Homicide,2020,0,0,0,NA,2026-02-11T00:00:00Z,NA
+13003,Atkinson County,13,Georgia,Drug_OD,2022,1-9,22.2,1,11.4-46.5,2026-02-11T00:00:00Z,NA
+13003,Atkinson County,13,Georgia,FA_Homicide,2021,0,0,0,NA,2026-02-11T00:00:00Z,NA
+13003,Atkinson County,13,Georgia,FA_Homicide,2023,1-9,6.5,1,2.2-25.7,2026-02-11T00:00:00Z,NA
+13005,Bacon County,13,Georgia,All_Homicide,2019,1-9,6.4,1,2.5-19.7,2026-02-11T00:00:00Z,NA
+13005,Bacon County,13,Georgia,Drug_OD,2019,1-9,13.3,1,6.9-27.6,2026-02-11T00:00:00Z,NA
+13007,Baker County,13,Georgia,FA_Homicide,2023,0,0,0,NA,2026-02-11T00:00:00Z,NA
+13009,Baldwin County,13,Georgia,All_Homicide,2021,1-9,14.8,1,8.6-30.7,2026-02-11T00:00:00Z,NA
+13009,Baldwin County,13,Georgia,All_Homicide,TTM,1-9,5.7,1,2.7-15.0,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+13009,Baldwin County,13,Georgia,All_Suicide,TTM,1-9,14.8,1,10.2-22.2,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+13009,Baldwin County,13,Georgia,Drug_OD,TTM,1-9,15.7,1,9.4-28.5,2026-02-11T00:00:00Z,"August, 2024 to July, 2025"
+13009,Baldwin County,13,Georgia,FA_Homicide,2020,1-9,10.5,1,5.7-24.8,2026-02-11T00:00:00Z,NA
+13009,Baldwin County,13,Georgia,FA_Suicide,TTM,1-9,9.4,1,5.7-16.1,2026-02-11T00:00:00Z,"October, 2024 to September, 2025"
+13011,Banks County,13,Georgia,All_Homicide,2024,1-9,7.2,1,3.0-20.6,2026-02-11T00:00:00Z,NA
+13011,Banks County,13,Georgia,FA_Deaths,2022,1-9,17.7,1,10.5-31.7,2026-02-11T00:00:00Z,NA
+13013,Barrow County,13,Georgia,All_Homicide,2021,1-9,5.8,1,3.2-12.5,2026-02-11T00:00:00Z,NA
+13013,Barrow County,13,Georgia,All_Homicide,2022,11,12.3,0,NA,2026-02-11T00:00:00Z,NA
+13013,Barrow County,13,Georgia,All_Suicide,2024,1-9,12.8,1,9.4-17.9,2026-02-11T00:00:00Z,NA
+13013,Barrow County,13,Georgia,FA_Deaths,2019,15,18,0,NA,2026-02-11T00:00:00Z,NA
+13013,Barrow County,13,Georgia,FA_Suicide,2020,1-9,6.6,1,4.3-10.6,2026-02-11T00:00:00Z,NA
+13015,Bartow County,13,Georgia,FA_Homicide,2022,1-9,4,1,2.2-9.3,2026-02-11T00:00:00Z,NA
+13015,Bartow County,13,Georgia,FA_Suicide,2020,1-9,9.1,1,6.4-13.8,2026-02-11T00:00:00Z,NA
+13015,Bartow County,13,Georgia,FA_Suicide,2022,14,12.4,0,NA,2026-02-11T00:00:00Z,NA

@@ -1,0 +1,613 @@
+period_raw,period,name,state_abbr
+2019,2019,Alabama,AL
+2020,2020,Alabama,AL
+2021,2021,Alabama,AL
+2022,2022,Alabama,AL
+2023,2023,Alabama,AL
+2024,2024,Alabama,AL
+2019,2019,Alabama,AL
+2020,2020,Alabama,AL
+2021,2021,Alabama,AL
+2022,2022,Alabama,AL
+2023,2023,Alabama,AL
+2024,2024,Alabama,AL
+2019,2019,Alaska,AK
+2020,2020,Alaska,AK
+2021,2021,Alaska,AK
+2022,2022,Alaska,AK
+2023,2023,Alaska,AK
+2024,2024,Alaska,AK
+2019,2019,Alaska,AK
+2020,2020,Alaska,AK
+2021,2021,Alaska,AK
+2022,2022,Alaska,AK
+2023,2023,Alaska,AK
+2024,2024,Alaska,AK
+2019,2019,Arizona,AZ
+2020,2020,Arizona,AZ
+2021,2021,Arizona,AZ
+2022,2022,Arizona,AZ
+2023,2023,Arizona,AZ
+2024,2024,Arizona,AZ
+2019,2019,Arizona,AZ
+2020,2020,Arizona,AZ
+2021,2021,Arizona,AZ
+2022,2022,Arizona,AZ
+2023,2023,Arizona,AZ
+2024,2024,Arizona,AZ
+2019,2019,Arkansas,AR
+2020,2020,Arkansas,AR
+2021,2021,Arkansas,AR
+2022,2022,Arkansas,AR
+2023,2023,Arkansas,AR
+2024,2024,Arkansas,AR
+2019,2019,Arkansas,AR
+2020,2020,Arkansas,AR
+2021,2021,Arkansas,AR
+2022,2022,Arkansas,AR
+2023,2023,Arkansas,AR
+2024,2024,Arkansas,AR
+2019,2019,California,CA
+2020,2020,California,CA
+2021,2021,California,CA
+2022,2022,California,CA
+2023,2023,California,CA
+2024,2024,California,CA
+2019,2019,California,CA
+2020,2020,California,CA
+2021,2021,California,CA
+2022,2022,California,CA
+2023,2023,California,CA
+2024,2024,California,CA
+2019,2019,Colorado,CO
+2020,2020,Colorado,CO
+2021,2021,Colorado,CO
+2022,2022,Colorado,CO
+2023,2023,Colorado,CO
+2024,2024,Colorado,CO
+2019,2019,Colorado,CO
+2020,2020,Colorado,CO
+2021,2021,Colorado,CO
+2022,2022,Colorado,CO
+2023,2023,Colorado,CO
+2024,2024,Colorado,CO
+2019,2019,Connecticut,CT
+2020,2020,Connecticut,CT
+2021,2021,Connecticut,CT
+2022,2022,Connecticut,CT
+2023,2023,Connecticut,CT
+2024,2024,Connecticut,CT
+2019,2019,Connecticut,CT
+2020,2020,Connecticut,CT
+2021,2021,Connecticut,CT
+2022,2022,Connecticut,CT
+2023,2023,Connecticut,CT
+2024,2024,Connecticut,CT
+2019,2019,Delaware,DE
+2020,2020,Delaware,DE
+2021,2021,Delaware,DE
+2022,2022,Delaware,DE
+2023,2023,Delaware,DE
+2024,2024,Delaware,DE
+2019,2019,Delaware,DE
+2020,2020,Delaware,DE
+2021,2021,Delaware,DE
+2022,2022,Delaware,DE
+2023,2023,Delaware,DE
+2024,2024,Delaware,DE
+2019,2019,District of Columbia,NA
+2020,2020,District of Columbia,NA
+2021,2021,District of Columbia,NA
+2022,2022,District of Columbia,NA
+2023,2023,District of Columbia,NA
+2024,2024,District of Columbia,NA
+2019,2019,District of Columbia,NA
+2020,2020,District of Columbia,NA
+2021,2021,District of Columbia,NA
+2022,2022,District of Columbia,NA
+2023,2023,District of Columbia,NA
+2024,2024,District of Columbia,NA
+2019,2019,Florida,FL
+2020,2020,Florida,FL
+2021,2021,Florida,FL
+2022,2022,Florida,FL
+2023,2023,Florida,FL
+2024,2024,Florida,FL
+2019,2019,Florida,FL
+2020,2020,Florida,FL
+2021,2021,Florida,FL
+2022,2022,Florida,FL
+2023,2023,Florida,FL
+2024,2024,Florida,FL
+2019,2019,Georgia,GA
+2020,2020,Georgia,GA
+2021,2021,Georgia,GA
+2022,2022,Georgia,GA
+2023,2023,Georgia,GA
+2024,2024,Georgia,GA
+2019,2019,Georgia,GA
+2020,2020,Georgia,GA
+2021,2021,Georgia,GA
+2022,2022,Georgia,GA
+2023,2023,Georgia,GA
+2024,2024,Georgia,GA
+2019,2019,Hawaii,HI
+2020,2020,Hawaii,HI
+2021,2021,Hawaii,HI
+2022,2022,Hawaii,HI
+2023,2023,Hawaii,HI
+2024,2024,Hawaii,HI
+2019,2019,Hawaii,HI
+2020,2020,Hawaii,HI
+2021,2021,Hawaii,HI
+2022,2022,Hawaii,HI
+2023,2023,Hawaii,HI
+2024,2024,Hawaii,HI
+2019,2019,Idaho,ID
+2020,2020,Idaho,ID
+2021,2021,Idaho,ID
+2022,2022,Idaho,ID
+2023,2023,Idaho,ID
+2024,2024,Idaho,ID
+2019,2019,Idaho,ID
+2020,2020,Idaho,ID
+2021,2021,Idaho,ID
+2022,2022,Idaho,ID
+2023,2023,Idaho,ID
+2024,2024,Idaho,ID
+2019,2019,Illinois,IL
+2020,2020,Illinois,IL
+2021,2021,Illinois,IL
+2022,2022,Illinois,IL
+2023,2023,Illinois,IL
+2024,2024,Illinois,IL
+2019,2019,Illinois,IL
+2020,2020,Illinois,IL
+2021,2021,Illinois,IL
+2022,2022,Illinois,IL
+2023,2023,Illinois,IL
+2024,2024,Illinois,IL
+2019,2019,Indiana,IN
+2020,2020,Indiana,IN
+2021,2021,Indiana,IN
+2022,2022,Indiana,IN
+2023,2023,Indiana,IN
+2024,2024,Indiana,IN
+2019,2019,Indiana,IN
+2020,2020,Indiana,IN
+2021,2021,Indiana,IN
+2022,2022,Indiana,IN
+2023,2023,Indiana,IN
+2024,2024,Indiana,IN
+2019,2019,Iowa,IA
+2020,2020,Iowa,IA
+2021,2021,Iowa,IA
+2022,2022,Iowa,IA
+2023,2023,Iowa,IA
+2024,2024,Iowa,IA
+2019,2019,Iowa,IA
+2020,2020,Iowa,IA
+2021,2021,Iowa,IA
+2022,2022,Iowa,IA
+2023,2023,Iowa,IA
+2024,2024,Iowa,IA
+2019,2019,Kansas,KS
+2020,2020,Kansas,KS
+2021,2021,Kansas,KS
+2022,2022,Kansas,KS
+2023,2023,Kansas,KS
+2024,2024,Kansas,KS
+2019,2019,Kansas,KS
+2020,2020,Kansas,KS
+2021,2021,Kansas,KS
+2022,2022,Kansas,KS
+2023,2023,Kansas,KS
+2024,2024,Kansas,KS
+2019,2019,Kentucky,KY
+2020,2020,Kentucky,KY
+2021,2021,Kentucky,KY
+2022,2022,Kentucky,KY
+2023,2023,Kentucky,KY
+2024,2024,Kentucky,KY
+2019,2019,Kentucky,KY
+2020,2020,Kentucky,KY
+2021,2021,Kentucky,KY
+2022,2022,Kentucky,KY
+2023,2023,Kentucky,KY
+2024,2024,Kentucky,KY
+2019,2019,Louisiana,LA
+2020,2020,Louisiana,LA
+2021,2021,Louisiana,LA
+2022,2022,Louisiana,LA
+2023,2023,Louisiana,LA
+2024,2024,Louisiana,LA
+2019,2019,Louisiana,LA
+2020,2020,Louisiana,LA
+2021,2021,Louisiana,LA
+2022,2022,Louisiana,LA
+2023,2023,Louisiana,LA
+2024,2024,Louisiana,LA
+2019,2019,Maine,ME
+2020,2020,Maine,ME
+2021,2021,Maine,ME
+2022,2022,Maine,ME
+2023,2023,Maine,ME
+2024,2024,Maine,ME
+2019,2019,Maine,ME
+2020,2020,Maine,ME
+2021,2021,Maine,ME
+2022,2022,Maine,ME
+2023,2023,Maine,ME
+2024,2024,Maine,ME
+2019,2019,Maryland,MD
+2020,2020,Maryland,MD
+2021,2021,Maryland,MD
+2022,2022,Maryland,MD
+2023,2023,Maryland,MD
+2024,2024,Maryland,MD
+2019,2019,Maryland,MD
+2020,2020,Maryland,MD
+2021,2021,Maryland,MD
+2022,2022,Maryland,MD
+2023,2023,Maryland,MD
+2024,2024,Maryland,MD
+2019,2019,Massachusetts,MA
+2020,2020,Massachusetts,MA
+2021,2021,Massachusetts,MA
+2022,2022,Massachusetts,MA
+2023,2023,Massachusetts,MA
+2024,2024,Massachusetts,MA
+2019,2019,Massachusetts,MA
+2020,2020,Massachusetts,MA
+2021,2021,Massachusetts,MA
+2022,2022,Massachusetts,MA
+2023,2023,Massachusetts,MA
+2024,2024,Massachusetts,MA
+2019,2019,Michigan,MI
+2020,2020,Michigan,MI
+2021,2021,Michigan,MI
+2022,2022,Michigan,MI
+2023,2023,Michigan,MI
+2024,2024,Michigan,MI
+2019,2019,Michigan,MI
+2020,2020,Michigan,MI
+2021,2021,Michigan,MI
+2022,2022,Michigan,MI
+2023,2023,Michigan,MI
+2024,2024,Michigan,MI
+2019,2019,Minnesota,MN
+2020,2020,Minnesota,MN
+2021,2021,Minnesota,MN
+2022,2022,Minnesota,MN
+2023,2023,Minnesota,MN
+2024,2024,Minnesota,MN
+2019,2019,Minnesota,MN
+2020,2020,Minnesota,MN
+2021,2021,Minnesota,MN
+2022,2022,Minnesota,MN
+2023,2023,Minnesota,MN
+2024,2024,Minnesota,MN
+2019,2019,Mississippi,MS
+2020,2020,Mississippi,MS
+2021,2021,Mississippi,MS
+2022,2022,Mississippi,MS
+2023,2023,Mississippi,MS
+2024,2024,Mississippi,MS
+2019,2019,Mississippi,MS
+2020,2020,Mississippi,MS
+2021,2021,Mississippi,MS
+2022,2022,Mississippi,MS
+2023,2023,Mississippi,MS
+2024,2024,Mississippi,MS
+2019,2019,Missouri,MO
+2020,2020,Missouri,MO
+2021,2021,Missouri,MO
+2022,2022,Missouri,MO
+2023,2023,Missouri,MO
+2024,2024,Missouri,MO
+2019,2019,Missouri,MO
+2020,2020,Missouri,MO
+2021,2021,Missouri,MO
+2022,2022,Missouri,MO
+2023,2023,Missouri,MO
+2024,2024,Missouri,MO
+2019,2019,Montana,MT
+2020,2020,Montana,MT
+2021,2021,Montana,MT
+2022,2022,Montana,MT
+2023,2023,Montana,MT
+2024,2024,Montana,MT
+2019,2019,Montana,MT
+2020,2020,Montana,MT
+2021,2021,Montana,MT
+2022,2022,Montana,MT
+2023,2023,Montana,MT
+2024,2024,Montana,MT
+2019,2019,Nebraska,NE
+2020,2020,Nebraska,NE
+2021,2021,Nebraska,NE
+2022,2022,Nebraska,NE
+2023,2023,Nebraska,NE
+2024,2024,Nebraska,NE
+2019,2019,Nebraska,NE
+2020,2020,Nebraska,NE
+2021,2021,Nebraska,NE
+2022,2022,Nebraska,NE
+2023,2023,Nebraska,NE
+2024,2024,Nebraska,NE
+2019,2019,Nevada,NV
+2020,2020,Nevada,NV
+2021,2021,Nevada,NV
+2022,2022,Nevada,NV
+2023,2023,Nevada,NV
+2024,2024,Nevada,NV
+2019,2019,Nevada,NV
+2020,2020,Nevada,NV
+2021,2021,Nevada,NV
+2022,2022,Nevada,NV
+2023,2023,Nevada,NV
+2024,2024,Nevada,NV
+2019,2019,New Hampshire,NH
+2020,2020,New Hampshire,NH
+2021,2021,New Hampshire,NH
+2022,2022,New Hampshire,NH
+2023,2023,New Hampshire,NH
+2024,2024,New Hampshire,NH
+2019,2019,New Hampshire,NH
+2020,2020,New Hampshire,NH
+2021,2021,New Hampshire,NH
+2022,2022,New Hampshire,NH
+2023,2023,New Hampshire,NH
+2024,2024,New Hampshire,NH
+2019,2019,New Jersey,NJ
+2020,2020,New Jersey,NJ
+2021,2021,New Jersey,NJ
+2022,2022,New Jersey,NJ
+2023,2023,New Jersey,NJ
+2024,2024,New Jersey,NJ
+2019,2019,New Jersey,NJ
+2020,2020,New Jersey,NJ
+2021,2021,New Jersey,NJ
+2022,2022,New Jersey,NJ
+2023,2023,New Jersey,NJ
+2024,2024,New Jersey,NJ
+2019,2019,New Mexico,NM
+2020,2020,New Mexico,NM
+2021,2021,New Mexico,NM
+2022,2022,New Mexico,NM
+2023,2023,New Mexico,NM
+2024,2024,New Mexico,NM
+2019,2019,New Mexico,NM
+2020,2020,New Mexico,NM
+2021,2021,New Mexico,NM
+2022,2022,New Mexico,NM
+2023,2023,New Mexico,NM
+2024,2024,New Mexico,NM
+2019,2019,New York,NY
+2020,2020,New York,NY
+2021,2021,New York,NY
+2022,2022,New York,NY
+2023,2023,New York,NY
+2024,2024,New York,NY
+2019,2019,New York,NY
+2020,2020,New York,NY
+2021,2021,New York,NY
+2022,2022,New York,NY
+2023,2023,New York,NY
+2024,2024,New York,NY
+2019,2019,North Carolina,NC
+2020,2020,North Carolina,NC
+2021,2021,North Carolina,NC
+2022,2022,North Carolina,NC
+2023,2023,North Carolina,NC
+2024,2024,North Carolina,NC
+2019,2019,North Carolina,NC
+2020,2020,North Carolina,NC
+2021,2021,North Carolina,NC
+2022,2022,North Carolina,NC
+2023,2023,North Carolina,NC
+2024,2024,North Carolina,NC
+2019,2019,North Dakota,ND
+2020,2020,North Dakota,ND
+2021,2021,North Dakota,ND
+2022,2022,North Dakota,ND
+2023,2023,North Dakota,ND
+2024,2024,North Dakota,ND
+2019,2019,North Dakota,ND
+2020,2020,North Dakota,ND
+2021,2021,North Dakota,ND
+2022,2022,North Dakota,ND
+2023,2023,North Dakota,ND
+2024,2024,North Dakota,ND
+2019,2019,Ohio,OH
+2020,2020,Ohio,OH
+2021,2021,Ohio,OH
+2022,2022,Ohio,OH
+2023,2023,Ohio,OH
+2024,2024,Ohio,OH
+2019,2019,Ohio,OH
+2020,2020,Ohio,OH
+2021,2021,Ohio,OH
+2022,2022,Ohio,OH
+2023,2023,Ohio,OH
+2024,2024,Ohio,OH
+2019,2019,Oklahoma,OK
+2020,2020,Oklahoma,OK
+2021,2021,Oklahoma,OK
+2022,2022,Oklahoma,OK
+2023,2023,Oklahoma,OK
+2024,2024,Oklahoma,OK
+2019,2019,Oklahoma,OK
+2020,2020,Oklahoma,OK
+2021,2021,Oklahoma,OK
+2022,2022,Oklahoma,OK
+2023,2023,Oklahoma,OK
+2024,2024,Oklahoma,OK
+2019,2019,Oregon,OR
+2020,2020,Oregon,OR
+2021,2021,Oregon,OR
+2022,2022,Oregon,OR
+2023,2023,Oregon,OR
+2024,2024,Oregon,OR
+2019,2019,Oregon,OR
+2020,2020,Oregon,OR
+2021,2021,Oregon,OR
+2022,2022,Oregon,OR
+2023,2023,Oregon,OR
+2024,2024,Oregon,OR
+2019,2019,Pennsylvania,PA
+2020,2020,Pennsylvania,PA
+2021,2021,Pennsylvania,PA
+2022,2022,Pennsylvania,PA
+2023,2023,Pennsylvania,PA
+2024,2024,Pennsylvania,PA
+2019,2019,Pennsylvania,PA
+2020,2020,Pennsylvania,PA
+2021,2021,Pennsylvania,PA
+2022,2022,Pennsylvania,PA
+2023,2023,Pennsylvania,PA
+2024,2024,Pennsylvania,PA
+2019,2019,Rhode Island,RI
+2020,2020,Rhode Island,RI
+2021,2021,Rhode Island,RI
+2022,2022,Rhode Island,RI
+2023,2023,Rhode Island,RI
+2024,2024,Rhode Island,RI
+2019,2019,Rhode Island,RI
+2020,2020,Rhode Island,RI
+2021,2021,Rhode Island,RI
+2022,2022,Rhode Island,RI
+2023,2023,Rhode Island,RI
+2024,2024,Rhode Island,RI
+2019,2019,South Carolina,SC
+2020,2020,South Carolina,SC
+2021,2021,South Carolina,SC
+2022,2022,South Carolina,SC
+2023,2023,South Carolina,SC
+2024,2024,South Carolina,SC
+2019,2019,South Carolina,SC
+2020,2020,South Carolina,SC
+2021,2021,South Carolina,SC
+2022,2022,South Carolina,SC
+2023,2023,South Carolina,SC
+2024,2024,South Carolina,SC
+2019,2019,South Dakota,SD
+2020,2020,South Dakota,SD
+2021,2021,South Dakota,SD
+2022,2022,South Dakota,SD
+2023,2023,South Dakota,SD
+2024,2024,South Dakota,SD
+2019,2019,South Dakota,SD
+2020,2020,South Dakota,SD
+2021,2021,South Dakota,SD
+2022,2022,South Dakota,SD
+2023,2023,South Dakota,SD
+2024,2024,South Dakota,SD
+2019,2019,Tennessee,TN
+2020,2020,Tennessee,TN
+2021,2021,Tennessee,TN
+2022,2022,Tennessee,TN
+2023,2023,Tennessee,TN
+2024,2024,Tennessee,TN
+2019,2019,Tennessee,TN
+2020,2020,Tennessee,TN
+2021,2021,Tennessee,TN
+2022,2022,Tennessee,TN
+2023,2023,Tennessee,TN
+2024,2024,Tennessee,TN
+2019,2019,Texas,TX
+2020,2020,Texas,TX
+2021,2021,Texas,TX
+2022,2022,Texas,TX
+2023,2023,Texas,TX
+2024,2024,Texas,TX
+2019,2019,Texas,TX
+2020,2020,Texas,TX
+2021,2021,Texas,TX
+2022,2022,Texas,TX
+2023,2023,Texas,TX
+2024,2024,Texas,TX
+2019,2019,Utah,UT
+2020,2020,Utah,UT
+2021,2021,Utah,UT
+2022,2022,Utah,UT
+2023,2023,Utah,UT
+2024,2024,Utah,UT
+2019,2019,Utah,UT
+2020,2020,Utah,UT
+2021,2021,Utah,UT
+2022,2022,Utah,UT
+2023,2023,Utah,UT
+2024,2024,Utah,UT
+2019,2019,Vermont,VT
+2020,2020,Vermont,VT
+2021,2021,Vermont,VT
+2022,2022,Vermont,VT
+2023,2023,Vermont,VT
+2024,2024,Vermont,VT
+2019,2019,Vermont,VT
+2020,2020,Vermont,VT
+2021,2021,Vermont,VT
+2022,2022,Vermont,VT
+2023,2023,Vermont,VT
+2024,2024,Vermont,VT
+2019,2019,Virginia,VA
+2020,2020,Virginia,VA
+2021,2021,Virginia,VA
+2022,2022,Virginia,VA
+2023,2023,Virginia,VA
+2024,2024,Virginia,VA
+2019,2019,Virginia,VA
+2020,2020,Virginia,VA
+2021,2021,Virginia,VA
+2022,2022,Virginia,VA
+2023,2023,Virginia,VA
+2024,2024,Virginia,VA
+2019,2019,Washington,WA
+2020,2020,Washington,WA
+2021,2021,Washington,WA
+2022,2022,Washington,WA
+2023,2023,Washington,WA
+2024,2024,Washington,WA
+2019,2019,Washington,WA
+2020,2020,Washington,WA
+2021,2021,Washington,WA
+2022,2022,Washington,WA
+2023,2023,Washington,WA
+2024,2024,Washington,WA
+2019,2019,West Virginia,WV
+2020,2020,West Virginia,WV
+2021,2021,West Virginia,WV
+2022,2022,West Virginia,WV
+2023,2023,West Virginia,WV
+2024,2024,West Virginia,WV
+2019,2019,West Virginia,WV
+2020,2020,West Virginia,WV
+2021,2021,West Virginia,WV
+2022,2022,West Virginia,WV
+2023,2023,West Virginia,WV
+2024,2024,West Virginia,WV
+2019,2019,Wisconsin,WI
+2020,2020,Wisconsin,WI
+2021,2021,Wisconsin,WI
+2022,2022,Wisconsin,WI
+2023,2023,Wisconsin,WI
+2024,2024,Wisconsin,WI
+2019,2019,Wisconsin,WI
+2020,2020,Wisconsin,WI
+2021,2021,Wisconsin,WI
+2022,2022,Wisconsin,WI
+2023,2023,Wisconsin,WI
+2024,2024,Wisconsin,WI
+2019,2019,Wyoming,WY
+2020,2020,Wyoming,WY
+2021,2021,Wyoming,WY
+2022,2022,Wyoming,WY
+2023,2023,Wyoming,WY
+2024,2024,Wyoming,WY
+2019,2019,Wyoming,WY
+2020,2020,Wyoming,WY
+2021,2021,Wyoming,WY
+2022,2022,Wyoming,WY
+2023,2023,Wyoming,WY
+2024,2024,Wyoming,WY

@@ -1,5 +1,5 @@
 ---
-title: "Story 3: Do Stricter Gun Laws Reduce Firearm Mortality? (with a Chicago Lens)"
+title: "Story 3: Do Stricter Gun Laws Reduce Firearm Mortality?"
 author: "Randy Howk"
 date: "`r Sys.Date()`"
 output:
@@ -17,7 +17,7 @@ This story explores whether **stricter firearm control laws** are associated wit
 
 - **CDC injury/violence mapping datasets** accessed via API (Socrata / data.cdc.gov)
 - A **5-point Likert** scale of gun-law strictness derived from **GIFFORDS state grades**
-- A focused module on **Chicago** using **Cook County** as the closest available CDC geography
+- State-level CDC mortality plus GIFFORDS strictness grading
 
 > **Important note (historical context):** The CDC’s *mortality data collection* (via the National Vital Statistics System) continues across decades; the major policy shift in the mid-1990s primarily reduced/removed dedicated federal funding for firearm injury research rather than stopping mortality reporting. We include a long-run time window beginning in **1999** (consistent annual coverage in these CDC mapping datasets), and you can extend/adjust the window as needed.
 
@@ -43,6 +43,41 @@ suppressPackageStartupMessages({
   library(officer)
   library(rvg)
 })
+
+# Guardrail for IDE runs: render this Rmd, not CSV debug artifacts.
+current_input <- tryCatch(basename(knitr::current_input()), error = function(e) "")
+if (nzchar(current_input) && current_input != "Story3.rmd") {
+  message(
+    "This document is intended to run from Story3.rmd. ",
+    "Do not render CSV debug files directly."
+  )
+}
+
+# Normalize state labels from mixed sources to 2-letter USPS abbreviations.
+# Handles full state names, plain abbreviations, and labels like "Alabama (AL)".
+to_state_abbr <- function(x) {
+  x <- as.character(x)
+  x <- stringr::str_squish(x)
+  x <- stringr::str_to_title(x)
+
+  # If already a plain 2-letter code, keep it.
+  is_code <- stringr::str_detect(x, "^[A-Za-z]{2}$")
+  out <- rep(NA_character_, length(x))
+  out[is_code] <- stringr::str_to_upper(x[is_code])
+
+  # Parse labels with trailing "(XX)" code.
+  paren_code <- stringr::str_match(x, "\\(([A-Za-z]{2})\\)$")[, 2]
+  out[is.na(out) & !is.na(paren_code)] <- stringr::str_to_upper(paren_code[is.na(out) & !is.na(paren_code)])
+
+  # Strip any parenthetical suffix and map by full name.
+  base_name <- stringr::str_squish(stringr::str_replace(x, "\\s*\\(.*\\)$", ""))
+  idx <- match(base_name, state.name)
+  out[is.na(out) & !is.na(idx)] <- state.abb[idx[is.na(out) & !is.na(idx)]]
+
+  # Keep only true US states for this project.
+  out[!out %in% state.abb] <- NA_character_
+  out
+}
 ```
 
 # Data sources
@@ -66,6 +101,13 @@ cdc_county_raw <- readr::read_csv(cdc_county_url, show_col_types = FALSE) |> cle
 
 glimpse(cdc_state_raw)
 glimpse(cdc_county_raw)
+
+message("CDC state raw rows: ", nrow(cdc_state_raw), " | cols: ", ncol(cdc_state_raw))
+message("CDC county raw rows: ", nrow(cdc_county_raw), " | cols: ", ncol(cdc_county_raw))
+
+# Write small raw snapshots for debugging when downstream filters go empty.
+readr::write_csv(utils::head(cdc_state_raw, 200), "cdc_state_raw_sample.csv")
+readr::write_csv(utils::head(cdc_county_raw, 200), "cdc_county_raw_sample.csv")
 ```
 
 ## Filter to firearm mortality & years
@@ -73,15 +115,59 @@ glimpse(cdc_county_raw)
 ```{r cdc-filter}
 start_year <- 1999
 
-cdc_state <- cdc_state_raw |>
-  filter(str_detect(intent, regex("firearm", ignore_case = TRUE))) |>
-  mutate(period = as.integer(period)) |>
+state_intents <- sort(unique(as.character(cdc_state_raw$intent)))
+county_intents <- sort(unique(as.character(cdc_county_raw$intent)))
+
+message("Sample CDC state intents: ", paste(head(state_intents, 10), collapse = ", "))
+message("Sample CDC county intents: ", paste(head(county_intents, 10), collapse = ", "))
+
+# Prefer current CDC schema (FA_Deaths + FA_Homicide); fall back to older text-based intent labels.
+has_fa_deaths_state <- "FA_Deaths" %in% state_intents
+has_fa_deaths_county <- "FA_Deaths" %in% county_intents
+has_fa_homicide_state <- "FA_Homicide" %in% state_intents
+has_fa_homicide_county <- "FA_Homicide" %in% county_intents
+
+if (has_fa_deaths_state || has_fa_homicide_state) {
+  state_keep <- intersect(c("FA_Deaths", "FA_Homicide"), state_intents)
+  cdc_state <- cdc_state_raw |>
+    filter(intent %in% state_keep)
+  message("Using CDC state intents: ", paste(state_keep, collapse = ", "))
+} else {
+  cdc_state <- cdc_state_raw |>
+    filter(str_detect(intent, regex("firearm", ignore_case = TRUE)))
+  message("Using CDC state fallback intent filter: text match on 'firearm'")
+}
+
+if (has_fa_deaths_county || has_fa_homicide_county) {
+  county_keep <- intersect(c("FA_Deaths", "FA_Homicide"), county_intents)
+  cdc_county <- cdc_county_raw |>
+    filter(intent %in% county_keep)
+  message("Using CDC county intents: ", paste(county_keep, collapse = ", "))
+} else {
+  cdc_county <- cdc_county_raw |>
+    filter(str_detect(intent, regex("firearm", ignore_case = TRUE)))
+  message("Using CDC county fallback intent filter: text match on 'firearm'")
+}
+
+cdc_state <- cdc_state |>
+  mutate(period = suppressWarnings(as.integer(period))) |>
   filter(!is.na(period), period >= start_year)
 
-cdc_county <- cdc_county_raw |>
-  filter(str_detect(intent, regex("firearm", ignore_case = TRUE))) |>
-  mutate(period = as.integer(period)) |>
+cdc_county <- cdc_county |>
+  mutate(period = suppressWarnings(as.integer(period))) |>
   filter(!is.na(period), period >= start_year)
+
+message("CDC state rows after firearm/year filter: ", nrow(cdc_state))
+message("CDC county rows after firearm/year filter: ", nrow(cdc_county))
+
+if (nrow(cdc_state) == 0) {
+  readr::write_csv(utils::head(cdc_state_raw, 500), "cdc_state_filter_debug.csv")
+  stop(
+    "CDC state data is empty after filter. ",
+    "Check cdc_state_raw_sample.csv and cdc_state_filter_debug.csv ",
+    "for available columns/values (especially `intent`)."
+  )
+}
 
 range(cdc_state$period, na.rm = TRUE)
 ```
@@ -232,32 +318,87 @@ cat("\nUnique GIFFORDS states:\n")
 print(sort(unique(giffords_grades$state)))
 
 bad_years <- year_counts |> dplyr::filter(n_states < 45)
-analysis_df <- state_latest %>%
-  left_join(gun_law, by = "state")
 
-cat("\n--- JOIN DIAGNOSTICS ---\n")
+if (nrow(bad_years) > 0) {
+  warning(
+    "Some GIFFORDS years returned fewer than 45 states: ",
+    paste(bad_years$year, collapse = ", ")
+  )
+}
 
-unmatched_cdc <- anti_join(state_latest, gun_law, by="state")
-unmatched_giff <- anti_join(gun_law, state_latest, by="state")
+# Choose a single analysis year using overlap + CDC coverage.
+# This avoids selecting a very recent partial CDC year with too few states.
+cdc_debug <- cdc_state |>
+  dplyr::transmute(
+    period_raw = as.character(period),
+    period = suppressWarnings(as.integer(period)),
+    name = as.character(name),
+    state_abbr = to_state_abbr(name)
+  )
 
-cat("\nCDC states NOT matched in GIFFORDS:\n")
-print(unmatched_cdc$state)
+giffords_debug <- giffords_grades |>
+  dplyr::transmute(
+    state = as.character(state),
+    year = suppressWarnings(as.integer(year)),
+    grade = as.character(grade),
+    likert = as.numeric(likert),
+    state_abbr = to_state_abbr(state)
+  )
 
-cat("\nGIFFORDS states NOT matched in CDC:\n")
-print(unmatched_giff$state)
+# Debug exports to inspect matching/years when knitting fails
+# Note: these are diagnostics only. Render Story3.rmd, not cdc.csv/giffords.csv.
+readr::write_csv(cdc_debug, "cdc.csv")
+readr::write_csv(giffords_debug, "giffords.csv")
 
-analysis_df <- analysis_df %>%
-  filter(!is.na(likert), !is.na(rate))
+cdc_year_coverage <- cdc_debug |>
+  dplyr::select(period, state_abbr) |>
+  dplyr::filter(!is.na(period), !is.na(state_abbr)) |>
+  dplyr::distinct(period, state_abbr) |>
+  dplyr::count(period, name = "n_states") |>
+  dplyr::arrange(desc(period))
 
-# Choose a single "law year" for cross-sectional analysis (align to latest CDC year available)
-law_year_used <- min(max(giffords_grades$year, na.rm = TRUE), max(cdc_state$period, na.rm = TRUE))
+cat("\nCDC state coverage by year (top 10):\n")
+print(head(cdc_year_coverage, 10))
+
+giffords_years <- sort(unique(giffords_debug$year[!is.na(giffords_debug$year)]))
+common_years <- sort(intersect(giffords_years, cdc_year_coverage$period))
+
+overlap_debug <- tibble::tibble(
+  cdc_years = paste(sort(unique(cdc_year_coverage$period)), collapse = ";"),
+  giffords_years = paste(sort(unique(giffords_years)), collapse = ";"),
+  common_years = paste(common_years, collapse = ";")
+)
+readr::write_csv(overlap_debug, "overlap_debug.csv")
+
+if (length(common_years) == 0) {
+  stop(
+    "No overlapping year found between CDC and GIFFORDS. ",
+    "Wrote debug files: cdc.csv, giffords.csv, overlap_debug.csv"
+  )
+}
+
+year_quality <- tibble::tibble(year = common_years) |>
+  dplyr::left_join(
+    cdc_year_coverage |>
+      dplyr::transmute(year = period, cdc_states = n_states),
+    by = "year"
+  ) |>
+  dplyr::mutate(score = cdc_states)
+
+cat("\nOverlapping CDC/GIFFORDS years:\n")
+print(year_quality |> dplyr::arrange(desc(year)))
+
+law_year_used <- year_quality |>
+  dplyr::arrange(desc(score), desc(year)) |>
+  dplyr::slice(1) |>
+  dplyr::pull(year)
 gun_law <- giffords_grades |>
   dplyr::filter(year == law_year_used) |>
   dplyr::transmute(
     state = stringr::str_to_title(stringr::str_squish(as.character(state))),
     grade = as.character(grade) |> stringr::str_squish(),
     likert = as.numeric(likert),
-    state_abbr = state.abb[match(stringr::str_to_title(stringr::str_squish(as.character(state))), state.name)]
+    state_abbr = to_state_abbr(state)
   ) |>
   dplyr::filter(!is.na(state_abbr))
 
@@ -279,9 +420,16 @@ state_latest <- cdc_state |>
   transmute(
     state = stringr::str_to_title(stringr::str_squish(as.character(name))),
     rate  = as.numeric(rate),
-    state_abbr = state.abb[match(stringr::str_to_title(stringr::str_squish(as.character(name))), state.name)]
+    state_abbr = to_state_abbr(name)
   ) |>
-  filter(!is.na(state_abbr))
+  filter(!is.na(state_abbr), !is.na(rate)) |>
+  group_by(state_abbr) |>
+  summarize(
+    state = first(state),
+    # Combined-intent proxy (FA_Deaths + FA_Homicide), not additive mortality.
+    rate = mean(rate, na.rm = TRUE),
+    .groups = "drop"
+  )
 
 cat("\n--- CDC SAMPLE ---\n")
 
@@ -299,11 +447,21 @@ analysis_df <- state_latest |>
   transmute(
     state = state_cdc,
     state_abbr = state_abbr,
-    rate = rate,
+    rate_per_100k = rate,
     grade = grade,
     likert = likert
   ) |>
-  drop_na(rate, likert)
+  drop_na(rate_per_100k, likert) |>
+  mutate(
+    rate_per_capita = rate_per_100k / 100000,
+    law_band = factor(likert, levels = 1:5, labels = c("F", "D", "C", "B", "A"), ordered = TRUE),
+    strictness_group = dplyr::case_when(
+      likert %in% c(4, 5) ~ "Strict (4-5)",
+      likert %in% c(1, 2, 3) ~ "Less strict (1-3)",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  filter(state_abbr != "PR")
 
 
 # Sanity checks (helps prevent silent empty joins)
@@ -317,7 +475,7 @@ if (nrow(analysis_df) < 10) {
   stop("analysis_df is too small after joining CDC + GIFFORDS. Check scraping output / state-name normalization.")
 }
 
-analysis_df |> arrange(desc(rate)) |> head(10)
+analysis_df |> arrange(desc(rate_per_100k)) |> head(10)
 ```
 
 # Do stricter laws reduce firearm mortality?
@@ -329,12 +487,357 @@ by_likert <- analysis_df |>
   group_by(likert) |>
   summarize(
     states = n(),
-    mean_rate = mean(rate, na.rm = TRUE),
-    median_rate = median(rate, na.rm = TRUE)
+    mean_rate_per_100k = mean(rate_per_100k, na.rm = TRUE),
+    median_rate_per_100k = median(rate_per_100k, na.rm = TRUE),
+    mean_rate_per_capita = mean(rate_per_capita, na.rm = TRUE),
+    median_rate_per_capita = median(rate_per_capita, na.rm = TRUE)
   ) |>
   arrange(likert)
 
 by_likert
+```
+
+## Combined groups comparison: strict (4–5) vs less strict (1–3)
+
+```{r strict-vs-less}
+comparison_45_vs_123 <- analysis_df |>
+  filter(!is.na(strictness_group)) |>
+  group_by(strictness_group) |>
+  summarize(
+    states = n(),
+    mean_rate_per_100k = mean(rate_per_100k, na.rm = TRUE),
+    median_rate_per_100k = median(rate_per_100k, na.rm = TRUE),
+    mean_rate_per_capita = mean(rate_per_capita, na.rm = TRUE),
+    median_rate_per_capita = median(rate_per_capita, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(strictness_group = factor(strictness_group, levels = c("Strict (4-5)", "Less strict (1-3)"))) |>
+  arrange(strictness_group)
+
+comparison_45_vs_123
+```
+
+## Heat maps (accessible palette)
+
+## Gun-law strictness (Likert)
+
+```{r map-laws}
+p_laws <- plot_usmap(data = analysis_df, values = "law_band") +
+  scale_fill_manual(
+    values = c(
+      "F" = "#c62828",    # least strict
+      "D" = "#f4b6c2",
+      "C" = "#d9d9d9",
+      "B" = "#7fb3ff",
+      "A" = "#0b3c8c"     # strictest
+    ),
+    drop = FALSE,
+    na.translate = FALSE,
+    name = "Law grade band"
+  ) +
+  labs(
+    title = "Gun-law strictness map (F red → A blue)",
+    subtitle = "A=blue, B=light blue, C=light gray, D=light pink, F=red"
+  ) +
+  theme_void() +
+  theme(legend.position = "right")
+
+p_laws
+```
+
+## Firearm mortality rate (CDC)
+
+```{r map-mortality}
+p_mortality <- plot_usmap(data = analysis_df, values = "rate_per_100k") +
+  scale_fill_gradient(
+    low = "#fff7bc",  # fewest deaths (light yellow)
+    high = "#b10026", # most deaths (red)
+    name = "Deaths per 100k"
+  ) +
+  labs(
+    title = glue("CDC firearm mortality rate by state ({analysis_year})"),
+    subtitle = glue("API: data.cdc.gov (SODA). Likert is from GIFFORDS grades (collapsed A–F → 1–5).")
+  ) +
+  theme_void() +
+  theme(legend.position = "right")
+
+p_mortality
+```
+
+## Combined map: strictness color + mortality distance scaling
+
+```{r map-combined-scaled}
+map_weighted_mean <- mean(analysis_df$rate_per_100k, na.rm = TRUE)
+
+state_sf <- usmap::us_map(regions = "states")
+state_coords <- as.data.frame(sf::st_coordinates(state_sf$geom))
+state_attr <- state_sf |>
+  sf::st_drop_geometry() |>
+  dplyr::mutate(row_id = dplyr::row_number())
+
+state_shapes <- state_coords |>
+  dplyr::transmute(
+    row_id = L3,
+    group = paste(L3, L2, L1, sep = "-"),
+    x = X,
+    y = Y
+  ) |>
+  dplyr::left_join(
+    state_attr |>
+      dplyr::select(row_id, abbr),
+    by = "row_id"
+  ) |>
+  dplyr::transmute(
+    state_abbr = abbr,
+    x = x,
+    y = y,
+    group = group
+  ) |>
+  dplyr::left_join(
+    analysis_df |>
+      dplyr::select(state_abbr, rate_per_100k, law_band),
+    by = "state_abbr"
+  ) |>
+  dplyr::filter(state_abbr != "PR")
+
+state_centroids <- state_shapes |>
+  dplyr::group_by(state_abbr) |>
+  dplyr::summarize(
+    cx = mean(x, na.rm = TRUE),
+    cy = mean(y, na.rm = TRUE),
+    rate_per_100k = dplyr::first(rate_per_100k),
+    law_band = dplyr::first(law_band),
+    .groups = "drop"
+  ) |>
+  dplyr::mutate(
+    rel_from_mean = (rate_per_100k - map_weighted_mean) / map_weighted_mean,
+    # Scale up/down from centroid by relative distance from weighted mean.
+    scale_factor = pmin(pmax(1 + 0.7 * rel_from_mean, 0.55), 1.55)
+  )
+
+us_center <- state_centroids |>
+  dplyr::summarize(ux = mean(cx, na.rm = TRUE), uy = mean(cy, na.rm = TRUE))
+
+exploded_map <- state_shapes |>
+  dplyr::left_join(state_centroids |>
+                     dplyr::select(state_abbr, cx, cy, scale_factor),
+                   by = "state_abbr") |>
+  dplyr::mutate(
+    # Explode outward from national center to reduce overlap.
+    x_shift = 0.45 * (cx - us_center$ux),
+    y_shift = 0.45 * (cy - us_center$uy),
+    # Original-size (unscaled) exploded border coordinates.
+    x_border = x + x_shift,
+    y_border = y + y_shift,
+    x2 = cx + (x - cx) * scale_factor + x_shift,
+    y2 = cy + (y - cy) * scale_factor + y_shift
+  )
+
+p_combo <- ggplot() +
+  geom_polygon(
+    data = exploded_map,
+    aes(x = x2, y = y2, group = group, fill = law_band),
+    color = "white",
+    linewidth = 0.2
+  ) +
+  geom_polygon(
+    data = exploded_map,
+    aes(x = x_border, y = y_border, group = group),
+    fill = NA,
+    color = "#00e676",
+    linetype = "22",
+    linewidth = 0.35
+  ) +
+  scale_fill_manual(
+    values = c(
+      "F" = "#c62828",
+      "D" = "#f4b6c2",
+      "C" = "#d9d9d9",
+      "B" = "#7fb3ff",
+      "A" = "#0b3c8c"
+    ),
+    drop = FALSE,
+    na.translate = FALSE,
+    name = "Law grade band"
+  ) +
+  coord_equal() +
+  labs(
+    title = "Combined map: law strictness + mortality-distance resizing",
+    subtitle = "State size changes by distance from weighted mean mortality; dashed outlines show original borders."
+  ) +
+  theme_void() +
+  theme(legend.position = "right")
+
+p_combo
+```
+
+## Visualizing weighted vs unweighted mean differences (6 options)
+
+```{r mean-diff-visuals, fig.height=5.5, fig.width=10}
+group_summary <- analysis_df |>
+  filter(!is.na(strictness_group)) |>
+  group_by(strictness_group) |>
+  summarize(
+    states = n(),
+    mean_rate_per_100k = mean(rate_per_100k, na.rm = TRUE),
+    median_rate_per_100k = median(rate_per_100k, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(strictness_group = factor(strictness_group, levels = c("Strict (4-5)", "Less strict (1-3)")))
+
+overall_weighted_mean <- mean(analysis_df$rate_per_100k, na.rm = TRUE)
+unweighted_group_mean <- mean(group_summary$mean_rate_per_100k, na.rm = TRUE)
+
+mean_compare <- tibble::tibble(
+  metric = "Deaths per 100k",
+  unweighted = unweighted_group_mean,
+  weighted = overall_weighted_mean
+)
+
+mean_compare
+
+# 2) Group-size weighted bar decomposition
+decomp <- group_summary |>
+  arrange(strictness_group) |>
+  mutate(
+    xmin = dplyr::lag(cumsum(states), default = 0),
+    xmax = cumsum(states)
+  )
+
+p_weighted_decomp <- ggplot(decomp) +
+  geom_rect(aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = mean_rate_per_100k, fill = strictness_group), color = "white") +
+  geom_hline(yintercept = overall_weighted_mean, linetype = "dashed", linewidth = 1, color = "black") +
+  annotate(
+    "text",
+    x = sum(decomp$states) + 1,
+    y = overall_weighted_mean + 0.35,
+    label = paste0(round(overall_weighted_mean, 1), " mean"),
+    hjust = 0,
+    vjust = 0,
+    size = 3.1
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Less strict (1-3)" = "#c62828",
+      "Strict (4-5)" = "#0b3c8c"
+    )
+  ) +
+  scale_x_continuous(
+    limits = c(0, sum(decomp$states) + 3),
+    breaks = seq(0, sum(decomp$states), by = 10),
+    minor_breaks = NULL
+  ) +
+  labs(
+    title = "2) Weighted decomposition (bar width = group share)",
+    subtitle = "Dashed line and label indicate the weighted overall mean.",
+    x = "Cumulative state count",
+    y = "Group mean deaths per 100k",
+    fill = "Group"
+  ) +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
+
+p_weighted_decomp
+
+# 6) Violin + box by group with mean markers
+lowest_df <- analysis_df |>
+  filter(!is.na(strictness_group), !is.na(rate_per_100k), !is.na(state_abbr)) |>
+  group_by(strictness_group) |>
+  slice_min(order_by = rate_per_100k, n = 1, with_ties = FALSE) |>
+  ungroup()
+
+median_df <- analysis_df |>
+  filter(!is.na(strictness_group), !is.na(rate_per_100k), !is.na(state_abbr)) |>
+  group_by(strictness_group) |>
+  mutate(
+    grp_median = median(rate_per_100k, na.rm = TRUE),
+    med_dist = abs(rate_per_100k - grp_median)
+  ) |>
+  slice_min(order_by = med_dist, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  select(-grp_median, -med_dist)
+
+highest_df <- analysis_df |>
+  filter(!is.na(strictness_group), !is.na(rate_per_100k), !is.na(state_abbr)) |>
+  group_by(strictness_group) |>
+  slice_max(order_by = rate_per_100k, n = 1, with_ties = FALSE) |>
+  ungroup()
+
+violin_labels <- bind_rows(
+  lowest_df |> mutate(label_type = "low"),
+  median_df |> mutate(label_type = "median"),
+  highest_df |> mutate(label_type = "high")
+) |>
+  group_by(strictness_group, label_type) |>
+  slice_head(n = 1) |>
+  ungroup() |>
+  mutate(state_abbr = toupper(state_abbr))
+
+p_violin <- ggplot(analysis_df, aes(x = strictness_group, y = rate_per_100k, fill = strictness_group)) +
+  geom_violin(alpha = 0.35, trim = FALSE) +
+  geom_boxplot(width = 0.2, outlier.shape = NA) +
+  geom_point(data = violin_labels, color = "gray45", size = 2.5) +
+  geom_text(
+    data = violin_labels,
+    aes(label = state_abbr),
+    color = "gray30",
+    nudge_x = 0.25,
+    hjust = 0,
+    vjust = 0,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  stat_summary(fun = mean, geom = "point", shape = 21, size = 3, fill = "yellow") +
+  geom_hline(yintercept = overall_weighted_mean, linetype = "dashed", linewidth = 1, color = "black") +
+  labs(
+    title = "6) Distribution by group with quantile box (IQR)",
+    x = "Strictness group",
+    y = "Deaths per 100k",
+    fill = "Group"
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, ceiling(max(analysis_df$rate_per_100k, na.rm = TRUE) / 10) * 10, by = 10),
+    minor_breaks = NULL
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_line(color = "gray80", linewidth = 0.3)
+  )
+
+p_violin
+
+distribution_classification <- analysis_df |>
+  filter(!is.na(strictness_group), !is.na(rate_per_100k)) |>
+  group_by(strictness_group) |>
+  summarize(
+    n = n(),
+    mean_rate = mean(rate_per_100k, na.rm = TRUE),
+    median_rate = median(rate_per_100k, na.rm = TRUE),
+    sd_rate = sd(rate_per_100k, na.rm = TRUE),
+    skew = {
+      m <- mean(rate_per_100k, na.rm = TRUE)
+      s <- sd(rate_per_100k, na.rm = TRUE)
+      if (is.na(s) || s == 0) NA_real_ else mean((rate_per_100k - m)^3, na.rm = TRUE) / (s^3)
+    },
+    shapiro_p = if (n() >= 3 && n() <= 5000) shapiro.test(rate_per_100k)$p.value else NA_real_,
+    .groups = "drop"
+  ) |>
+  mutate(
+    distribution_class = dplyr::case_when(
+      is.na(skew) ~ "Undetermined",
+      abs(skew) < 0.2 & !is.na(shapiro_p) & shapiro_p > 0.05 ~ "Approximately normal",
+      skew >= 0.75 ~ "Right skew",
+      skew >= 0.2 ~ "Mild right skew",
+      skew <= -0.75 ~ "Left skew",
+      skew <= -0.2 ~ "Mild left skew",
+      TRUE ~ "Non-normal, near symmetric"
+    )
+  ) |>
+  select(strictness_group, n, mean_rate, median_rate, skew, shapiro_p, distribution_class)
+
+distribution_classification
 ```
 
 ## Correlation and regression (association, not causation)
@@ -342,72 +845,15 @@ by_likert
 ```{r stats}
 # cor.test needs at least 2 finite observations; we already sanity-check above,
 # but keep a guard so knitting fails gracefully if inputs change.
-if (sum(is.finite(analysis_df$likert) & is.finite(analysis_df$rate)) < 3) {
+if (sum(is.finite(analysis_df$likert) & is.finite(analysis_df$rate_per_100k)) < 3) {
   stop("Not enough finite observations for correlation/regression after filtering.")
 }
 
-cor_spear <- cor.test(analysis_df$likert, analysis_df$rate, method = "spearman")
-lm_fit <- lm(rate ~ likert, data = analysis_df)
+cor_spear <- cor.test(analysis_df$likert, analysis_df$rate_per_100k, method = "spearman")
+lm_fit <- lm(rate_per_100k ~ likert, data = analysis_df)
 
 cor_spear
 summary(lm_fit)
-```
-
-# Heat maps (accessible palette)
-
-## Firearm mortality rate (CDC)
-
-```{r map-mortality}
-p_mortality <- plot_usmap(data = analysis_df, values = "rate") +
-  scale_fill_viridis(option = "C", name = "Deaths per 100k") +
-  labs(
-    title = glue("CDC firearm mortality rate by state ({analysis_year})"),
-    subtitle = glue("API: data.cdc.gov (SODA). Likert is from GIFFORDS grades (collapsed A–F → 1–5).")
-  ) +
-  theme_minimal()
-
-p_mortality
-```
-
-## Gun-law strictness (Likert)
-
-```{r map-laws}
-p_laws <- plot_usmap(data = analysis_df, values = "likert") +
-  scale_fill_viridis(discrete = TRUE, option = "D", name = "Strictness (1–5)") +
-  labs(
-    title = "Gun-law strictness (Likert 1–5)",
-    subtitle = "Operationalized from GIFFORDS state letter grades"
-  ) +
-  theme_minimal()
-
-p_laws
-```
-
-# Chicago lens: Cook County (Chicago proxy)
-
-CDC county-level data enables a “Chicago” module using **Cook County**.
-
-```{r cook-trend}
-cook <- cdc_county |>
-  filter(name == "Cook County") |>
-  select(period, rate, count, intent, state = state_name) |>
-  arrange(period)
-
-if (nrow(cook) == 0) stop("Cook County not found in county dataset for firearm intent.")
-
-p_cook <- ggplot(cook, aes(x = period, y = rate)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 2) +
-  scale_x_continuous(breaks = pretty_breaks()) +
-  labs(
-    title = glue("Cook County firearm mortality trend ({start_year}–{max(cook$period, na.rm=TRUE)})"),
-    subtitle = "Use as an evidence-based proxy when discussing Chicago in the national narrative",
-    x = "Year",
-    y = "Deaths per 100k"
-  ) +
-  theme_minimal()
-
-p_cook
 ```
 
 # PPT generation (Path B): officer + rvg
@@ -426,7 +872,7 @@ ppt <- ppt |>
     location = ph_location_type(type = "ctrTitle")
   ) |>
   ph_with(
-    glue("CDC API + GIFFORDS Likert • Latest year: {analysis_year} • Chicago lens: Cook County"),
+    glue("CDC API + GIFFORDS Likert • Latest year: {analysis_year}"),
     location = ph_location_type(type = "subTitle")
   )
 
@@ -443,7 +889,7 @@ ppt <- ppt |>
   ph_with(dml(ggobj = p_laws), location = ph_location_type(type = "body"))
 
 # Slide 4: Association plot
-p_scatter <- ggplot(analysis_df, aes(x = likert, y = rate)) +
+p_scatter <- ggplot(analysis_df, aes(x = likert, y = rate_per_100k)) +
   geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.85) +
   geom_smooth(method = "lm", se = FALSE) +
   scale_x_continuous(breaks = 1:5) +
@@ -460,13 +906,7 @@ ppt <- ppt |>
   ph_with("Do stricter laws correlate with lower mortality?", location = ph_location_type(type = "title")) |>
   ph_with(dml(ggobj = p_scatter), location = ph_location_type(type = "body"))
 
-# Slide 5: Chicago lens
-ppt <- ppt |>
-  add_slide(layout = "Title and Content", master = "Office Theme") |>
-  ph_with("Chicago lens: Cook County trend", location = ph_location_type(type = "title")) |>
-  ph_with(dml(ggobj = p_cook), location = ph_location_type(type = "body"))
-
-# Slide 6: Methods / notes
+# Slide 5: Methods / notes
 methods_text <- paste(
   "Data:",
   "• Firearm mortality rates from CDC (data.cdc.gov) via SODA API (state + county).",
@@ -492,7 +932,7 @@ ppt <- ppt |>
   ph_with("Methods & limitations (for your write-up)", location = ph_location_type(type = "title")) |>
   ph_with(methods_text, location = ph_location_type(type = "body"))
 
-out_pptx <- "Gun_Laws_CDC_GIFFORDS_Chicago.pptx"
+out_pptx <- "Gun_Laws_CDC_GIFFORDS.pptx"
 print(ppt, target = out_pptx)
 
 out_pptx
@@ -505,10 +945,9 @@ out_pptx
 3. Now you can animate:
    - individual map layers / legends / text
    - scatter points separate from trend line
-   - Cook County trend line points vs line
+   - chart elements and labels
 
 # Next enhancements (optional)
 
 - Add a **panel** across years (1999–present) with a mixed model or state fixed effects
-- Add a “bordering-state laxity” variable to contextualize Chicago / Illinois
 - Add outlier slides highlighting states with strict laws but high rates (and vice versa)
