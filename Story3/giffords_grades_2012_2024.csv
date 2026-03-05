@@ -1,0 +1,401 @@
+state,grade,year,likert
+Alabama,F,2017,1
+Alaska,F,2017,1
+Arizona,F,2017,1
+Arkansas,F,2017,1
+California,A,2017,5
+Colorado,C,2017,3
+Connecticut,A-,2017,5
+Delaware,B,2017,4
+Florida,F,2017,1
+Georgia,F,2017,1
+Hawaii,A-,2017,5
+Idaho,F,2017,1
+Illinois,B+,2017,4
+Indiana,D-,2017,2
+Iowa,C-,2017,3
+Kansas,F,2017,1
+Kentucky,F,2017,1
+Louisiana,F,2017,1
+Maine,F,2017,1
+Maryland,A-,2017,5
+Massachusetts,A-,2017,5
+Michigan,C,2017,3
+Minnesota,C+,2017,3
+Mississippi,F,2017,1
+Missouri,F,2017,1
+Montana,F,2017,1
+Nebraska,D,2017,2
+Nevada,D,2017,2
+New Hampshire,F,2017,1
+New Jersey,A-,2017,5
+New Mexico,F,2017,1
+New York,A-,2017,5
+North Carolina,D-,2017,2
+North Dakota,F,2017,1
+Ohio,D,2017,2
+Oklahoma,F,2017,1
+Oregon,C,2017,3
+Pennsylvania,C,2017,3
+Rhode Island,B+,2017,4
+South Carolina,F,2017,1
+South Dakota,F,2017,1
+Tennessee,D-,2017,2
+Texas,F,2017,1
+Utah,F,2017,1
+Vermont,F,2017,1
+Virginia,D,2017,2
+Washington,B,2017,4
+West Virginia,F,2017,1
+Wisconsin,C-,2017,3
+Wyoming,F,2017,1
+Alabama,F,2018,1
+Alaska,F,2018,1
+Arizona,F,2018,1
+Arkansas,F,2018,1
+California,A,2018,5
+Colorado,C,2018,3
+Connecticut,A-,2018,5
+Delaware,B,2018,4
+Florida,C-,2018,3
+Georgia,F,2018,1
+Hawaii,A-,2018,5
+Idaho,F,2018,1
+Illinois,B+,2018,4
+Indiana,D-,2018,2
+Iowa,C,2018,3
+Kansas,F,2018,1
+Kentucky,F,2018,1
+Louisiana,F,2018,1
+Maine,F,2018,1
+Maryland,A-,2018,5
+Massachusetts,A-,2018,5
+Michigan,C,2018,3
+Minnesota,C+,2018,3
+Mississippi,F,2018,1
+Missouri,F,2018,1
+Montana,F,2018,1
+Nebraska,C-,2018,3
+Nevada,D,2018,2
+New Hampshire,F,2018,1
+New Jersey,A,2018,5
+New Mexico,F,2018,1
+New York,A-,2018,5
+North Carolina,D,2018,2
+North Dakota,F,2018,1
+Ohio,D,2018,2
+Oklahoma,F,2018,1
+Oregon,C+,2018,3
+Pennsylvania,C+,2018,3
+Rhode Island,B+,2018,4
+South Carolina,F,2018,1
+South Dakota,F,2018,1
+Tennessee,D-,2018,2
+Texas,F,2018,1
+Utah,D-,2018,2
+Vermont,D+,2018,2
+Virginia,D,2018,2
+Washington,B+,2018,4
+West Virginia,F,2018,1
+Wisconsin,C-,2018,3
+Wyoming,F,2018,1
+Alabama,F,2019,1
+Alaska,F,2019,1
+Arizona,F,2019,1
+Arkansas,F,2019,1
+California,A,2019,5
+Colorado,C+,2019,3
+Connecticut,A-,2019,5
+Delaware,B,2019,4
+Florida,C-,2019,3
+Georgia,F,2019,1
+Hawaii,A-,2019,5
+Idaho,F,2019,1
+Illinois,A-,2019,5
+Indiana,D-,2019,2
+Iowa,C,2019,3
+Kansas,F,2019,1
+Kentucky,F,2019,1
+Louisiana,F,2019,1
+Maine,F,2019,1
+Maryland,A-,2019,5
+Massachusetts,A-,2019,5
+Michigan,C,2019,3
+Minnesota,C+,2019,3
+Mississippi,F,2019,1
+Missouri,F,2019,1
+Montana,F,2019,1
+Nebraska,C,2019,3
+Nevada,C+,2019,3
+New Hampshire,F,2019,1
+New Jersey,A,2019,5
+New Mexico,C,2019,3
+New York,A-,2019,5
+North Carolina,D,2019,2
+North Dakota,F,2019,1
+Ohio,D,2019,2
+Oklahoma,F,2019,1
+Oregon,C+,2019,3
+Pennsylvania,C+,2019,3
+Rhode Island,B+,2019,4
+South Carolina,F,2019,1
+South Dakota,F,2019,1
+Tennessee,D-,2019,2
+Texas,F,2019,1
+Utah,D,2019,2
+Vermont,C-,2019,3
+Virginia,D,2019,2
+Washington,B+,2019,4
+West Virginia,F,2019,1
+Wisconsin,C-,2019,3
+Wyoming,F,2019,1
+Alabama,F,2020,1
+Alaska,F,2020,1
+Arizona,F,2020,1
+Arkansas,F,2020,1
+California,A,2020,5
+Colorado,C+,2020,3
+Connecticut,A-,2020,5
+Delaware,B,2020,4
+Florida,C-,2020,3
+Georgia,F,2020,1
+Hawaii,A-,2020,5
+Idaho,F,2020,1
+Illinois,A-,2020,5
+Indiana,D,2020,2
+Iowa,C,2020,3
+Kansas,F,2020,1
+Kentucky,F,2020,1
+Louisiana,F,2020,1
+Maine,F,2020,1
+Maryland,A-,2020,5
+Massachusetts,A-,2020,5
+Michigan,C,2020,3
+Minnesota,C+,2020,3
+Mississippi,F,2020,1
+Missouri,F,2020,1
+Montana,F,2020,1
+Nebraska,C,2020,3
+Nevada,C+,2020,3
+New Hampshire,F,2020,1
+New Jersey,A,2020,5
+New Mexico,C+,2020,3
+New York,A-,2020,5
+North Carolina,D,2020,2
+North Dakota,F,2020,1
+Ohio,D,2020,2
+Oklahoma,F,2020,1
+Oregon,C+,2020,3
+Pennsylvania,C+,2020,3
+Rhode Island,B+,2020,4
+South Carolina,F,2020,1
+South Dakota,F,2020,1
+Tennessee,D-,2020,2
+Texas,F,2020,1
+Utah,D,2020,2
+Vermont,C-,2020,3
+Virginia,B,2020,4
+Washington,B+,2020,4
+West Virginia,F,2020,1
+Wisconsin,C-,2020,3
+Wyoming,F,2020,1
+Alabama,F,2021,1
+Alaska,F,2021,1
+Arizona,F,2021,1
+Arkansas,F,2021,1
+California,A,2021,5
+Colorado,B,2021,4
+Connecticut,A-,2021,5
+Delaware,B,2021,4
+Florida,C-,2021,3
+Georgia,F,2021,1
+Hawaii,A-,2021,5
+Idaho,F,2021,1
+Illinois,A-,2021,5
+Indiana,D-,2021,2
+Iowa,F,2021,1
+Kansas,F,2021,1
+Kentucky,F,2021,1
+Louisiana,F,2021,1
+Maine,F,2021,1
+Maryland,A-,2021,5
+Massachusetts,A-,2021,5
+Michigan,C+,2021,3
+Minnesota,C+,2021,3
+Mississippi,F,2021,1
+Missouri,F,2021,1
+Montana,F,2021,1
+Nebraska,C-,2021,3
+Nevada,C+,2021,3
+New Hampshire,F,2021,1
+New Jersey,A,2021,5
+New Mexico,C,2021,3
+New York,A-,2021,5
+North Carolina,C-,2021,3
+North Dakota,F,2021,1
+Ohio,D,2021,2
+Oklahoma,F,2021,1
+Oregon,B-,2021,4
+Pennsylvania,B-,2021,4
+Rhode Island,B,2021,4
+South Carolina,F,2021,1
+South Dakota,F,2021,1
+Tennessee,F,2021,1
+Texas,F,2021,1
+Utah,F,2021,1
+Vermont,C-,2021,3
+Virginia,B,2021,4
+Washington,B,2021,4
+West Virginia,F,2021,1
+Wisconsin,C-,2021,3
+Wyoming,F,2021,1
+Alabama,F,2022,1
+Alaska,F,2022,1
+Arizona,F,2022,1
+Arkansas,F,2022,1
+California,A,2022,5
+Colorado,B,2022,4
+Connecticut,A-,2022,5
+Delaware,B,2022,4
+Florida,C-,2022,3
+Georgia,F,2022,1
+Hawaii,A-,2022,5
+Idaho,F,2022,1
+Illinois,A-,2022,5
+Indiana,F,2022,1
+Iowa,F,2022,1
+Kansas,F,2022,1
+Kentucky,F,2022,1
+Louisiana,F,2022,1
+Maine,F,2022,1
+Maryland,A-,2022,5
+Massachusetts,A-,2022,5
+Michigan,C+,2022,3
+Minnesota,C+,2022,3
+Mississippi,F,2022,1
+Missouri,F,2022,1
+Montana,F,2022,1
+Nebraska,C,2022,3
+Nevada,C+,2022,3
+New Hampshire,F,2022,1
+New Jersey,A,2022,5
+New Mexico,C+,2022,3
+New York,A-,2022,5
+North Carolina,C,2022,3
+North Dakota,F,2022,1
+Ohio,F,2022,1
+Oklahoma,F,2022,1
+Oregon,B+,2022,4
+Pennsylvania,B-,2022,4
+Rhode Island,B+,2022,4
+South Carolina,F,2022,1
+South Dakota,F,2022,1
+Tennessee,F,2022,1
+Texas,F,2022,1
+Utah,F,2022,1
+Vermont,C-,2022,3
+Virginia,B,2022,4
+Washington,B+,2022,4
+West Virginia,F,2022,1
+Wisconsin,D+,2022,2
+Wyoming,F,2022,1
+Alabama,F,2023,1
+Alaska,F,2023,1
+Arizona,F,2023,1
+Arkansas,F,2023,1
+California,A,2023,5
+Colorado,A-,2023,5
+Connecticut,A,2023,5
+Delaware,B+,2023,4
+Florida,D+,2023,2
+Georgia,F,2023,1
+Hawaii,A-,2023,5
+Idaho,F,2023,1
+Illinois,A-,2023,5
+Indiana,D-,2023,2
+Iowa,F,2023,1
+Kansas,F,2023,1
+Kentucky,F,2023,1
+Louisiana,F,2023,1
+Maine,D-,2023,2
+Maryland,A-,2023,5
+Massachusetts,A-,2023,5
+Michigan,B-,2023,4
+Minnesota,B,2023,4
+Mississippi,F,2023,1
+Missouri,F,2023,1
+Montana,F,2023,1
+Nebraska,C-,2023,3
+Nevada,B-,2023,4
+New Hampshire,D-,2023,2
+New Jersey,A,2023,5
+New Mexico,C+,2023,3
+New York,A-,2023,5
+North Carolina,C-,2023,3
+North Dakota,F,2023,1
+Ohio,D-,2023,2
+Oklahoma,F,2023,1
+Oregon,A-,2023,5
+Pennsylvania,B,2023,4
+Rhode Island,B+,2023,4
+South Carolina,D-,2023,2
+South Dakota,F,2023,1
+Tennessee,F,2023,1
+Texas,F,2023,1
+Utah,F,2023,1
+Vermont,B-,2023,4
+Virginia,B+,2023,4
+Washington,A-,2023,5
+West Virginia,F,2023,1
+Wisconsin,C,2023,3
+Wyoming,F,2023,1
+Alabama,F,2024,1
+Alaska,F,2024,1
+Arizona,F,2024,1
+Arkansas,F,2024,1
+California,A,2024,5
+Colorado,A-,2024,5
+Connecticut,A,2024,5
+Delaware,A-,2024,5
+Florida,C-,2024,3
+Georgia,F,2024,1
+Hawaii,A-,2024,5
+Idaho,F,2024,1
+Illinois,A-,2024,5
+Indiana,D-,2024,2
+Iowa,F,2024,1
+Kansas,F,2024,1
+Kentucky,F,2024,1
+Louisiana,F,2024,1
+Maine,C+,2024,3
+Maryland,A-,2024,5
+Massachusetts,A,2024,5
+Michigan,B-,2024,4
+Minnesota,B,2024,4
+Mississippi,F,2024,1
+Missouri,F,2024,1
+Montana,F,2024,1
+Nebraska,C-,2024,3
+Nevada,B-,2024,4
+New Hampshire,D-,2024,2
+New Jersey,A,2024,5
+New Mexico,B-,2024,4
+New York,A,2024,5
+North Carolina,C-,2024,3
+North Dakota,F,2024,1
+Ohio,D-,2024,2
+Oklahoma,F,2024,1
+Oregon,A-,2024,5
+Pennsylvania,B,2024,4
+Rhode Island,A-,2024,5
+South Carolina,F,2024,1
+South Dakota,F,2024,1
+Tennessee,F,2024,1
+Texas,F,2024,1
+Utah,F,2024,1
+Vermont,B-,2024,4
+Virginia,B+,2024,4
+Washington,A-,2024,5
+West Virginia,F,2024,1
+Wisconsin,C,2024,3
+Wyoming,F,2024,1

@@ -1,0 +1,514 @@
+---
+title: "Story 3: Do Stricter Gun Laws Reduce Firearm Mortality? (with a Chicago Lens)"
+author: "Randy Howk"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    df_print: paged
+    theme: readable
+---
+
+# Overview
+
+This story explores whether **stricter firearm control laws** are associated with **lower firearm mortality** (deaths per 100,000 persons), using:
+
+- **CDC injury/violence mapping datasets** accessed via API (Socrata / data.cdc.gov)
+- A **5-point Likert** scale of gun-law strictness derived from **GIFFORDS state grades**
+- A focused module on **Chicago** using **Cook County** as the closest available CDC geography
+
+> **Important note (historical context):** The CDC’s *mortality data collection* (via the National Vital Statistics System) continues across decades; the major policy shift in the mid-1990s primarily reduced/removed dedicated federal funding for firearm injury research rather than stopping mortality reporting. We include a long-run time window beginning in **1999** (consistent annual coverage in these CDC mapping datasets), and you can extend/adjust the window as needed.
+
+# Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 10,
+  fig.height = 6
+)
+
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(janitor)
+  library(glue)
+  library(scales)
+  library(usmap)
+  library(viridis)
+  library(rvest)
+  library(officer)
+  library(rvg)
+})
+```
+
+# Data sources
+
+## CDC firearm mortality (API)
+
+We use CDC “Mapping Injury, Overdose, and Violence” datasets hosted on **data.cdc.gov**:
+
+- **State dataset:** `fpsi-y8tj`
+- **County dataset:** `psx4-wq38`
+
+These datasets can be accessed using Socrata’s SODA API (CSV endpoint).
+
+```{r cdc-pull}
+# SODA CSV endpoints (large limits; adjust if you hit size constraints)
+cdc_state_url  <- "https://data.cdc.gov/resource/fpsi-y8tj.csv?$limit=500000"
+cdc_county_url <- "https://data.cdc.gov/resource/psx4-wq38.csv?$limit=500000"
+
+cdc_state_raw  <- readr::read_csv(cdc_state_url, show_col_types = FALSE) |> clean_names()
+cdc_county_raw <- readr::read_csv(cdc_county_url, show_col_types = FALSE) |> clean_names()
+
+glimpse(cdc_state_raw)
+glimpse(cdc_county_raw)
+```
+
+## Filter to firearm mortality & years
+
+```{r cdc-filter}
+start_year <- 1999
+
+cdc_state <- cdc_state_raw |>
+  filter(str_detect(intent, regex("firearm", ignore_case = TRUE))) |>
+  mutate(period = as.integer(period)) |>
+  filter(!is.na(period), period >= start_year)
+
+cdc_county <- cdc_county_raw |>
+  filter(str_detect(intent, regex("firearm", ignore_case = TRUE))) |>
+  mutate(period = as.integer(period)) |>
+  filter(!is.na(period), period >= start_year)
+
+range(cdc_state$period, na.rm = TRUE)
+```
+
+
+# Gun law strictness: 5-point Likert (GIFFORDS grades)
+
+## Methods and rationale for scraping
+
+GIFFORDS publishes an annual state **Gun Law Scorecard** that assigns each state a **letter grade** (A+ … F) based on the strength of its firearm laws. These grades are widely cited, but GIFFORDS does **not** provide a stable, official multi-year machine-readable download suitable for reproducible analysis. The most reliable way to construct a multi-year panel (within the scope of this course project) is therefore to **programmatically extract** the state grades from GIFFORDS’ publicly available annual scorecard pages.
+
+To keep the workflow reproducible and respectful:
+
+- We **cache** the extracted results to a local CSV (`giffords_grades_2012_2024.csv`) so repeated knitting does not repeatedly hit the site.
+- We include a **scrape “health check”** to ensure each year returns ~50 states; if a year fails, we stop with a clear error.
+- We normalize away GIFFORDS’ on-page link tokens (e.g., `【162†Colorado】`) that can otherwise break simple text parsing.
+- If GIFFORDS changes page structure, you can delete the cached CSV and re-knit to regenerate, or adjust the parsing function below.
+
+### Likert mapping
+
+We collapse GIFFORDS letter grades to a 5-point Likert scale:
+
+- **5** = A+, A, A-
+- **4** = B+, B, B-
+- **3** = C+, C, C-
+- **2** = D+, D, D-
+- **1** = F
+
+## Scrape and build a multi-year grade panel (2012–2024)
+
+```{r giffords-scrape-multiyear}
+scorecard_url <- function(year) {
+  if (year == 2024) {
+    "https://giffords.org/resources/scorecard2024/"
+  } else {
+    paste0("https://giffords.org/lawcenter/resources/scorecard", year, "/")
+  }
+}
+
+grade_to_likert <- function(g){
+  g <- stringr::str_trim(g)
+  dplyr::case_when(
+    stringr::str_detect(g, "^A") ~ 5,
+    stringr::str_detect(g, "^B") ~ 4,
+    stringr::str_detect(g, "^C") ~ 3,
+    stringr::str_detect(g, "^D") ~ 2,
+    stringr::str_detect(g, "^F") ~ 1,
+    TRUE ~ NA_real_
+  )
+}
+
+scrape_scorecard_year <- function(year) {
+  url <- scorecard_url(year)
+  message("Scraping GIFFORDS year ", year, " -> ", url)
+
+  page <- rvest::read_html(url)
+
+  # 1) Prefer real HTML tables if present
+  tabs <- page |> rvest::html_elements("table") |> rvest::html_table(fill = TRUE)
+
+  if (length(tabs) > 0) {
+    cand <- tabs[[which.max(purrr::map_int(tabs, nrow))]] |> janitor::clean_names()
+
+    if (any(stringr::str_detect(names(cand), "grade")) &&
+        any(stringr::str_detect(names(cand), "state|name"))) {
+
+      state_col <- names(cand)[which(stringr::str_detect(names(cand), "state|name"))[1]]
+      grade_col <- names(cand)[which(stringr::str_detect(names(cand), "grade"))[1]]
+
+      out <- cand |>
+        dplyr::transmute(
+          state = as.character(.data[[state_col]]) |> stringr::str_squish(),
+          grade = as.character(.data[[grade_col]]) |> stringr::str_squish(),
+          year  = year,
+          likert = grade_to_likert(grade)
+        ) |>
+        dplyr::filter(state %in% state.name) |>
+        dplyr::distinct()
+
+      if (nrow(out) >= 45) return(out)
+    }
+  }
+
+  # 2) Fallback: parse the page text (robust to the "【id†State】" link tokens)
+  txt <- page |> rvest::html_text2()
+
+  marker <- "Gun Law Strength"
+  pos <- stringr::str_locate(txt, stringr::fixed(marker, ignore_case = TRUE))[1,1]
+  if (is.na(pos)) stop("Could not locate the scorecard table text for year ", year)
+
+  tail_txt <- stringr::str_sub(txt, pos, pos + 30000)
+
+  # Remove the embedded "【...】" tokens that otherwise glue state names to grades
+  tail_txt <- stringr::str_replace_all(tail_txt, "【[^】]*】", " ")
+  tail_txt <- stringr::str_squish(tail_txt)
+
+  m <- stringr::str_match_all(
+    tail_txt,
+    "\\b\\d{1,2}\\s+([A-Za-z ]+?)\\s+(A\\+|A-|A|B\\+|B-|B|C\\+|C-|C|D\\+|D-|D|F)\\b"
+  )[[1]]
+
+  if (nrow(m) == 0) stop("No (state, grade) pairs found for year ", year)
+
+  tibble::tibble(
+    state = stringr::str_squish(m[,2]),
+    grade = m[,3],
+    year  = year
+  ) |>
+    dplyr::filter(state %in% state.name) |>
+    dplyr::mutate(likert = grade_to_likert(grade)) |>
+    dplyr::distinct()
+}
+
+cache_file <- "giffords_grades_2012_2024.csv"
+
+if (file.exists(cache_file)) {
+  giffords_grades <- readr::read_csv(cache_file, show_col_types = FALSE)
+} else {
+  years <- 2012:2024
+  giffords_grades <- purrr::map_dfr(years, ~{
+    tryCatch(scrape_scorecard_year(.x),
+             error = function(e){
+               warning("Failed year ", .x, ": ", conditionMessage(e))
+               tibble::tibble(state = character(), grade = character(), year = integer(), likert = numeric())
+             })
+  }) |>
+    dplyr::arrange(year, state)
+
+  readr::write_csv(giffords_grades, cache_file)
+}
+
+# Scrape health check: each year should have (almost) all 50 states
+year_counts <- giffords_grades |> dplyr::count(year, name = "n_states")
+print(year_counts, n = Inf)
+
+cat("\n--- GIFFORDS SAMPLE ---\n")
+
+print(
+  giffords_grades %>%
+    select(state, year, grade) %>%
+    head(15)
+)
+
+cat("\nGIFFORDS rows per year:\n")
+print(giffords_grades %>% count(year))
+
+cat("\nUnique GIFFORDS states:\n")
+print(sort(unique(giffords_grades$state)))
+
+bad_years <- year_counts |> dplyr::filter(n_states < 45)
+analysis_df <- state_latest %>%
+  left_join(gun_law, by = "state")
+
+cat("\n--- JOIN DIAGNOSTICS ---\n")
+
+unmatched_cdc <- anti_join(state_latest, gun_law, by="state")
+unmatched_giff <- anti_join(gun_law, state_latest, by="state")
+
+cat("\nCDC states NOT matched in GIFFORDS:\n")
+print(unmatched_cdc$state)
+
+cat("\nGIFFORDS states NOT matched in CDC:\n")
+print(unmatched_giff$state)
+
+analysis_df <- analysis_df %>%
+  filter(!is.na(likert), !is.na(rate))
+
+# Choose a single "law year" for cross-sectional analysis (align to latest CDC year available)
+law_year_used <- min(max(giffords_grades$year, na.rm = TRUE), max(cdc_state$period, na.rm = TRUE))
+gun_law <- giffords_grades |>
+  dplyr::filter(year == law_year_used) |>
+  dplyr::transmute(
+    state = stringr::str_to_title(stringr::str_squish(as.character(state))),
+    grade = as.character(grade) |> stringr::str_squish(),
+    likert = as.numeric(likert),
+    state_abbr = state.abb[match(stringr::str_to_title(stringr::str_squish(as.character(state))), state.name)]
+  ) |>
+  dplyr::filter(!is.na(state_abbr))
+
+
+message("Using GIFFORDS law-year: ", law_year_used)
+```
+
+
+# Analysis dataset
+
+We analyze the **latest available year** for a cross-sectional comparison, and also build a long-run panel for optional trends.
+
+```{r analysis-datasets}
+# Align the analysis year so the law-grade year matches the CDC mortality year used
+analysis_year <- law_year_used
+
+state_latest <- cdc_state |>
+  filter(period == analysis_year) |>
+  transmute(
+    state = stringr::str_to_title(stringr::str_squish(as.character(name))),
+    rate  = as.numeric(rate),
+    state_abbr = state.abb[match(stringr::str_to_title(stringr::str_squish(as.character(name))), state.name)]
+  ) |>
+  filter(!is.na(state_abbr))
+
+cat("\n--- CDC SAMPLE ---\n")
+
+print(
+  state_latest %>%
+    select(state, rate) %>%
+    head(15)
+)
+
+cat("\nUnique CDC states:\n")
+print(sort(unique(state_latest$state)))
+
+analysis_df <- state_latest |>
+  left_join(gun_law, by = "state_abbr", suffix = c("_cdc","_giff")) |>
+  transmute(
+    state = state_cdc,
+    state_abbr = state_abbr,
+    rate = rate,
+    grade = grade,
+    likert = likert
+  ) |>
+  drop_na(rate, likert)
+
+
+# Sanity checks (helps prevent silent empty joins)
+message("Rows in CDC state_latest: ", nrow(state_latest))
+message("Rows in GIFFORDS gun_law: ", nrow(gun_law))
+message("Rows after join (analysis_df): ", nrow(analysis_df))
+
+if (nrow(analysis_df) < 10) {
+  message("Top unmatched CDC states (not found in GIFFORDS for this year):")
+  print(dplyr::anti_join(state_latest, gun_law, by = "state_abbr") |> dplyr::slice_head(n = 15))
+  stop("analysis_df is too small after joining CDC + GIFFORDS. Check scraping output / state-name normalization.")
+}
+
+analysis_df |> arrange(desc(rate)) |> head(10)
+```
+
+# Do stricter laws reduce firearm mortality?
+
+## Summary by Likert bin
+
+```{r by-likert}
+by_likert <- analysis_df |>
+  group_by(likert) |>
+  summarize(
+    states = n(),
+    mean_rate = mean(rate, na.rm = TRUE),
+    median_rate = median(rate, na.rm = TRUE)
+  ) |>
+  arrange(likert)
+
+by_likert
+```
+
+## Correlation and regression (association, not causation)
+
+```{r stats}
+# cor.test needs at least 2 finite observations; we already sanity-check above,
+# but keep a guard so knitting fails gracefully if inputs change.
+if (sum(is.finite(analysis_df$likert) & is.finite(analysis_df$rate)) < 3) {
+  stop("Not enough finite observations for correlation/regression after filtering.")
+}
+
+cor_spear <- cor.test(analysis_df$likert, analysis_df$rate, method = "spearman")
+lm_fit <- lm(rate ~ likert, data = analysis_df)
+
+cor_spear
+summary(lm_fit)
+```
+
+# Heat maps (accessible palette)
+
+## Firearm mortality rate (CDC)
+
+```{r map-mortality}
+p_mortality <- plot_usmap(data = analysis_df, values = "rate") +
+  scale_fill_viridis(option = "C", name = "Deaths per 100k") +
+  labs(
+    title = glue("CDC firearm mortality rate by state ({analysis_year})"),
+    subtitle = glue("API: data.cdc.gov (SODA). Likert is from GIFFORDS grades (collapsed A–F → 1–5).")
+  ) +
+  theme_minimal()
+
+p_mortality
+```
+
+## Gun-law strictness (Likert)
+
+```{r map-laws}
+p_laws <- plot_usmap(data = analysis_df, values = "likert") +
+  scale_fill_viridis(discrete = TRUE, option = "D", name = "Strictness (1–5)") +
+  labs(
+    title = "Gun-law strictness (Likert 1–5)",
+    subtitle = "Operationalized from GIFFORDS state letter grades"
+  ) +
+  theme_minimal()
+
+p_laws
+```
+
+# Chicago lens: Cook County (Chicago proxy)
+
+CDC county-level data enables a “Chicago” module using **Cook County**.
+
+```{r cook-trend}
+cook <- cdc_county |>
+  filter(name == "Cook County") |>
+  select(period, rate, count, intent, state = state_name) |>
+  arrange(period)
+
+if (nrow(cook) == 0) stop("Cook County not found in county dataset for firearm intent.")
+
+p_cook <- ggplot(cook, aes(x = period, y = rate)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = pretty_breaks()) +
+  labs(
+    title = glue("Cook County firearm mortality trend ({start_year}–{max(cook$period, na.rm=TRUE)})"),
+    subtitle = "Use as an evidence-based proxy when discussing Chicago in the national narrative",
+    x = "Year",
+    y = "Deaths per 100k"
+  ) +
+  theme_minimal()
+
+p_cook
+```
+
+# PPT generation (Path B): officer + rvg
+
+This section creates a PowerPoint file with **editable vector charts**.
+After creating the PPT, open it in PowerPoint and **Ungroup** the chart objects (often twice) to animate components.
+
+```{r make-ppt}
+ppt <- read_pptx()
+
+# Slide 1: Title
+ppt <- ppt |>
+  add_slide(layout = "Title Slide", master = "Office Theme") |>
+  ph_with(
+    "Do Stricter Gun Laws Reduce Firearm Mortality?",
+    location = ph_location_type(type = "ctrTitle")
+  ) |>
+  ph_with(
+    glue("CDC API + GIFFORDS Likert • Latest year: {analysis_year} • Chicago lens: Cook County"),
+    location = ph_location_type(type = "subTitle")
+  )
+
+# Slide 2: Mortality heatmap
+ppt <- ppt |>
+  add_slide(layout = "Title and Content", master = "Office Theme") |>
+  ph_with("Firearm mortality by state (CDC)", location = ph_location_type(type = "title")) |>
+  ph_with(dml(ggobj = p_mortality), location = ph_location_type(type = "body"))
+
+# Slide 3: Laws heatmap
+ppt <- ppt |>
+  add_slide(layout = "Title and Content", master = "Office Theme") |>
+  ph_with("Gun-law strictness (Likert 1–5)", location = ph_location_type(type = "title")) |>
+  ph_with(dml(ggobj = p_laws), location = ph_location_type(type = "body"))
+
+# Slide 4: Association plot
+p_scatter <- ggplot(analysis_df, aes(x = likert, y = rate)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.85) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:5) +
+  labs(
+    title = "Association: strictness vs mortality",
+    subtitle = glue("Spearman rho = {round(unname(cor_spear$estimate), 2)} (p={signif(cor_spear$p.value, 3)})"),
+    x = "Strictness (1 = lax … 5 = strict)",
+    y = "Deaths per 100k"
+  ) +
+  theme_minimal()
+
+ppt <- ppt |>
+  add_slide(layout = "Title and Content", master = "Office Theme") |>
+  ph_with("Do stricter laws correlate with lower mortality?", location = ph_location_type(type = "title")) |>
+  ph_with(dml(ggobj = p_scatter), location = ph_location_type(type = "body"))
+
+# Slide 5: Chicago lens
+ppt <- ppt |>
+  add_slide(layout = "Title and Content", master = "Office Theme") |>
+  ph_with("Chicago lens: Cook County trend", location = ph_location_type(type = "title")) |>
+  ph_with(dml(ggobj = p_cook), location = ph_location_type(type = "body"))
+
+# Slide 6: Methods / notes
+methods_text <- paste(
+  "Data:",
+  "• Firearm mortality rates from CDC (data.cdc.gov) via SODA API (state + county).",
+  "• Mortality time window begins 1999 for a consistent modern series.",
+  "",
+  "Gun-law strictness:",
+  "• GIFFORDS annual state grades (A+ to F) are scraped from public scorecard pages (2012–2024).",
+  "• Grades are collapsed to a 5-point Likert scale:",
+  "  5=A-range, 4=B-range, 3=C-range, 2=D-range, 1=F.",
+  "• Scraping safeguards: cached CSV output, light pacing between requests, and fallback parsing.",
+  "",
+  "Year alignment:",
+  "• The analysis year is set to the most recent year available in BOTH CDC and GIFFORDS (law_year_used).",
+  "",
+  "Analysis:",
+  "• Cross-sectional summary by Likert bin, Spearman correlation, and linear regression.",
+  "• Results describe association only; confounding and policy endogeneity remain limitations.",
+  sep = "\n"
+)
+
+ppt <- ppt |>
+  add_slide(layout = "Title and Content", master = "Office Theme") |>
+  ph_with("Methods & limitations (for your write-up)", location = ph_location_type(type = "title")) |>
+  ph_with(methods_text, location = ph_location_type(type = "body"))
+
+out_pptx <- "Gun_Laws_CDC_GIFFORDS_Chicago.pptx"
+print(ppt, target = out_pptx)
+
+out_pptx
+```
+
+# How to animate in PowerPoint
+
+1. Open the generated `.pptx`
+2. Click a chart → **Right click → Group → Ungroup** (repeat if needed)
+3. Now you can animate:
+   - individual map layers / legends / text
+   - scatter points separate from trend line
+   - Cook County trend line points vs line
+
+# Next enhancements (optional)
+
+- Add a **panel** across years (1999–present) with a mixed model or state fixed effects
+- Add a “bordering-state laxity” variable to contextualize Chicago / Illinois
+- Add outlier slides highlighting states with strict laws but high rates (and vice versa)
