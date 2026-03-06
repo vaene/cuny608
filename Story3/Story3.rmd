@@ -113,7 +113,7 @@ readr::write_csv(utils::head(cdc_county_raw, 200), "cdc_county_raw_sample.csv")
 ## Filter to firearm mortality & years
 
 ```{r cdc-filter}
-start_year <- 1999
+start_year <- 2017
 
 state_intents <- sort(unique(as.character(cdc_state_raw$intent)))
 county_intents <- sort(unique(as.character(cdc_county_raw$intent)))
@@ -121,32 +121,28 @@ county_intents <- sort(unique(as.character(cdc_county_raw$intent)))
 message("Sample CDC state intents: ", paste(head(state_intents, 10), collapse = ", "))
 message("Sample CDC county intents: ", paste(head(county_intents, 10), collapse = ", "))
 
-# Prefer current CDC schema (FA_Deaths + FA_Homicide); fall back to older text-based intent labels.
-has_fa_deaths_state <- "FA_Deaths" %in% state_intents
-has_fa_deaths_county <- "FA_Deaths" %in% county_intents
-has_fa_homicide_state <- "FA_Homicide" %in% state_intents
-has_fa_homicide_county <- "FA_Homicide" %in% county_intents
+# Prefer FA_Deaths when available; otherwise fall back to legacy firearm labels.
+state_keep <- intersect(c("FA_Deaths"), state_intents)
+county_keep <- intersect(c("FA_Deaths"), county_intents)
 
-if (has_fa_deaths_state || has_fa_homicide_state) {
-  state_keep <- intersect(c("FA_Deaths", "FA_Homicide"), state_intents)
+if (length(state_keep) > 0) {
   cdc_state <- cdc_state_raw |>
     filter(intent %in% state_keep)
-  message("Using CDC state intents: ", paste(state_keep, collapse = ", "))
+  message("CDC state intent basis: FA_Deaths")
 } else {
   cdc_state <- cdc_state_raw |>
     filter(str_detect(intent, regex("firearm", ignore_case = TRUE)))
-  message("Using CDC state fallback intent filter: text match on 'firearm'")
+  message("CDC state fallback basis: legacy /firearm/i intents")
 }
 
-if (has_fa_deaths_county || has_fa_homicide_county) {
-  county_keep <- intersect(c("FA_Deaths", "FA_Homicide"), county_intents)
+if (length(county_keep) > 0) {
   cdc_county <- cdc_county_raw |>
     filter(intent %in% county_keep)
-  message("Using CDC county intents: ", paste(county_keep, collapse = ", "))
+  message("CDC county intent basis: FA_Deaths")
 } else {
   cdc_county <- cdc_county_raw |>
     filter(str_detect(intent, regex("firearm", ignore_case = TRUE)))
-  message("Using CDC county fallback intent filter: text match on 'firearm'")
+  message("CDC county fallback basis: legacy /firearm/i intents")
 }
 
 cdc_state <- cdc_state |>
@@ -299,6 +295,11 @@ if (file.exists(cache_file)) {
   readr::write_csv(giffords_grades, cache_file)
 }
 
+# Align both sources to project window: 2017 through latest available.
+giffords_grades <- giffords_grades |>
+  dplyr::mutate(year = suppressWarnings(as.integer(year))) |>
+  dplyr::filter(!is.na(year), year >= start_year)
+
 # Scrape health check: each year should have (almost) all 50 states
 year_counts <- giffords_grades |> dplyr::count(year, name = "n_states")
 print(year_counts, n = Inf)
@@ -334,7 +335,8 @@ cdc_debug <- cdc_state |>
     period = suppressWarnings(as.integer(period)),
     name = as.character(name),
     state_abbr = to_state_abbr(name)
-  )
+  ) |>
+  dplyr::filter(!is.na(period), period >= start_year)
 
 giffords_debug <- giffords_grades |>
   dplyr::transmute(
@@ -343,7 +345,8 @@ giffords_debug <- giffords_grades |>
     grade = as.character(grade),
     likert = as.numeric(likert),
     state_abbr = to_state_abbr(state)
-  )
+  ) |>
+  dplyr::filter(!is.na(year), year >= start_year)
 
 # Debug exports to inspect matching/years when knitting fails
 # Note: these are diagnostics only. Render Story3.rmd, not cdc.csv/giffords.csv.
@@ -362,6 +365,14 @@ print(head(cdc_year_coverage, 10))
 
 giffords_years <- sort(unique(giffords_debug$year[!is.na(giffords_debug$year)]))
 common_years <- sort(intersect(giffords_years, cdc_year_coverage$period))
+
+if (length(common_years) > 0) {
+  expected_years <- seq(start_year, max(common_years), by = 1)
+  missing_years <- setdiff(expected_years, common_years)
+  if (length(missing_years) > 0) {
+    warning("Missing overlap years in 2017+ window: ", paste(missing_years, collapse = ", "))
+  }
+}
 
 overlap_debug <- tibble::tibble(
   cdc_years = paste(sort(unique(cdc_year_coverage$period)), collapse = ";"),
@@ -426,7 +437,7 @@ state_latest <- cdc_state |>
   group_by(state_abbr) |>
   summarize(
     state = first(state),
-    # Combined-intent proxy (FA_Deaths + FA_Homicide), not additive mortality.
+    # Single-intent FA_Deaths rate (or fallback proxy where unavailable).
     rate = mean(rate, na.rm = TRUE),
     .groups = "drop"
   )
@@ -521,23 +532,26 @@ comparison_45_vs_123
 
 ## Gun-law strictness (Likert)
 
+Accessibility color note:
+This map uses a colorblind-safe, ordered categorical palette (A to F) so each law-grade band is distinguishable without relying on red/green contrast.
+
 ```{r map-laws}
 p_laws <- plot_usmap(data = analysis_df, values = "law_band") +
   scale_fill_manual(
     values = c(
-      "F" = "#c62828",    # least strict
-      "D" = "#f4b6c2",
-      "C" = "#d9d9d9",
-      "B" = "#7fb3ff",
-      "A" = "#0b3c8c"     # strictest
+      "A" = "#0072B2",
+      "B" = "#56B4E9",
+      "C" = "#999999",
+      "D" = "#E69F00",
+      "F" = "#D55E00"
     ),
     drop = FALSE,
     na.translate = FALSE,
-    name = "Law grade band"
+    name = "Law grade band (A-F)"
   ) +
   labs(
-    title = "Gun-law strictness map (F red → A blue)",
-    subtitle = "A=blue, B=light blue, C=light gray, D=light pink, F=red"
+    title = "Gun Law Strictness Map (A blue -> F red)",
+    subtitle = "Colorblind-safe palette: A=blue, B=sky blue, C=gray, D=orange, F=orange-red"
   ) +
   theme_void() +
   theme(legend.position = "right")
@@ -547,13 +561,12 @@ p_laws
 
 ## Firearm mortality rate (CDC)
 
+Accessibility color note:
+This map uses a perceptually uniform `viridis` sequential scale so equal changes in mortality rate appear as equal visual steps for most viewers, including color-vision-deficient users.
+
 ```{r map-mortality}
 p_mortality <- plot_usmap(data = analysis_df, values = "rate_per_100k") +
-  scale_fill_gradient(
-    low = "#fff7bc",  # fewest deaths (light yellow)
-    high = "#b10026", # most deaths (red)
-    name = "Deaths per 100k"
-  ) +
+  scale_fill_viridis_c(option = "C", name = "Deaths per 100k") +
   labs(
     title = glue("CDC firearm mortality rate by state ({analysis_year})"),
     subtitle = glue("API: data.cdc.gov (SODA). Likert is from GIFFORDS grades (collapsed A–F → 1–5).")
@@ -566,8 +579,16 @@ p_mortality
 
 ## Combined map: strictness color + mortality distance scaling
 
+Accessibility color note:
+This map keeps the same colorblind-safe strictness palette and adds size encoding for mortality distance, so interpretation does not depend on color alone.
+
 ```{r map-combined-scaled}
-map_weighted_mean <- mean(analysis_df$rate_per_100k, na.rm = TRUE)
+map_group_mean_of_means <- analysis_df |>
+  dplyr::filter(!is.na(strictness_group), !is.na(rate_per_100k)) |>
+  dplyr::group_by(strictness_group) |>
+  dplyr::summarize(group_mean = mean(rate_per_100k, na.rm = TRUE), .groups = "drop") |>
+  dplyr::summarize(mean_of_means = mean(group_mean, na.rm = TRUE)) |>
+  dplyr::pull(mean_of_means)
 
 state_sf <- usmap::us_map(regions = "states")
 state_coords <- as.data.frame(sf::st_coordinates(state_sf$geom))
@@ -610,8 +631,8 @@ state_centroids <- state_shapes |>
     .groups = "drop"
   ) |>
   dplyr::mutate(
-    rel_from_mean = (rate_per_100k - map_weighted_mean) / map_weighted_mean,
-    # Scale up/down from centroid by relative distance from weighted mean.
+    rel_from_mean = (rate_per_100k - map_group_mean_of_means) / map_group_mean_of_means,
+    # Scale up/down from centroid by relative distance from mean of group means.
     scale_factor = pmin(pmax(1 + 0.7 * rel_from_mean, 0.55), 1.55)
   )
 
@@ -650,12 +671,13 @@ p_combo <- ggplot() +
   ) +
   scale_fill_manual(
     values = c(
-      "F" = "#c62828",
-      "D" = "#f4b6c2",
-      "C" = "#d9d9d9",
-      "B" = "#7fb3ff",
-      "A" = "#0b3c8c"
+      "F" = "#D55E00",
+      "D" = "#E69F00",
+      "C" = "#999999",
+      "B" = "#56B4E9",
+      "A" = "#0072B2"
     ),
+    breaks = c("A", "B", "C", "D", "F"),
     drop = FALSE,
     na.translate = FALSE,
     name = "Law grade band"
@@ -663,7 +685,7 @@ p_combo <- ggplot() +
   coord_equal() +
   labs(
     title = "Combined map: law strictness + mortality-distance resizing",
-    subtitle = "State size changes by distance from weighted mean mortality; dashed outlines show original borders."
+    subtitle = "State size changes by distance from the mean of group means; dashed outlines show original borders."
   ) +
   theme_void() +
   theme(legend.position = "right")
@@ -671,7 +693,410 @@ p_combo <- ggplot() +
 p_combo
 ```
 
-## Visualizing weighted vs unweighted mean differences (6 options)
+## Year-by-year chart frames (2017 to latest)
+
+The following sections generate the same 5 chart types for each available year.
+Charts are grouped by chart type so you can animate each type over time.
+
+```{r yearly-data-prep}
+giffords_years <- giffords_grades |>
+  dplyr::transmute(year = suppressWarnings(as.integer(year))) |>
+  dplyr::filter(!is.na(year), year >= start_year) |>
+  dplyr::pull(year) |>
+  unique() |>
+  sort()
+
+cdc_firearm_cov <- cdc_state |>
+  dplyr::transmute(period = suppressWarnings(as.integer(period)), state_abbr = to_state_abbr(name)) |>
+  dplyr::filter(!is.na(period), !is.na(state_abbr), period >= start_year) |>
+  dplyr::distinct(period, state_abbr) |>
+  dplyr::count(period, name = "n_states")
+
+cdc_proxy_cov <- cdc_state_raw |>
+  dplyr::transmute(
+    intent = as.character(intent),
+    period = suppressWarnings(as.integer(period)),
+    state_abbr = to_state_abbr(name)
+  ) |>
+  dplyr::filter(intent == "All_Homicide", !is.na(period), !is.na(state_abbr), period >= start_year) |>
+  dplyr::distinct(period, state_abbr) |>
+  dplyr::count(period, name = "n_states")
+
+panel_years <- sort(intersect(
+  giffords_years,
+  sort(unique(c(
+    cdc_firearm_cov |> dplyr::filter(n_states >= 45) |> dplyr::pull(period),
+    cdc_proxy_cov |> dplyr::filter(n_states >= 45) |> dplyr::pull(period)
+  )))
+))
+
+if (length(panel_years) == 0) stop("No overlapping years with >=45 states for yearly charts.")
+
+build_year_df <- function(target_year) {
+  # Primary series: same FA_Deaths logic as main analysis (preserves recent-year behavior).
+  state_year <- cdc_state |>
+    dplyr::filter(period == target_year) |>
+    dplyr::transmute(
+      state_abbr = to_state_abbr(name),
+      rate_per_100k = suppressWarnings(as.numeric(rate))
+    ) |>
+    dplyr::filter(!is.na(state_abbr), !is.na(rate_per_100k)) |>
+    dplyr::group_by(state_abbr) |>
+    dplyr::summarize(rate_per_100k = mean(rate_per_100k, na.rm = TRUE), .groups = "drop")
+  metric_basis <- "FA_Deaths"
+
+  # Fallback for early years where firearm series is unavailable in current endpoint.
+  if (nrow(state_year) < 45) {
+    state_year <- cdc_state_raw |>
+      dplyr::transmute(
+        intent = as.character(intent),
+        period = suppressWarnings(as.integer(period)),
+        state_abbr = to_state_abbr(name),
+        rate_per_100k = suppressWarnings(as.numeric(rate))
+      ) |>
+      dplyr::filter(
+        intent == "All_Homicide",
+        period == target_year,
+        !is.na(state_abbr),
+        !is.na(rate_per_100k)
+      ) |>
+      dplyr::group_by(state_abbr) |>
+      dplyr::summarize(rate_per_100k = mean(rate_per_100k, na.rm = TRUE), .groups = "drop")
+    metric_basis <- "Proxy: All_Homicide"
+  }
+
+  law_year <- giffords_grades |>
+    dplyr::filter(year == target_year) |>
+    dplyr::transmute(
+      state_abbr = to_state_abbr(state),
+      grade = as.character(grade),
+      likert = as.numeric(likert)
+    ) |>
+    dplyr::filter(!is.na(state_abbr), !is.na(likert))
+
+  out <- state_year |>
+    dplyr::left_join(law_year, by = "state_abbr") |>
+    dplyr::filter(!is.na(rate_per_100k), !is.na(likert), state_abbr != "PR") |>
+    dplyr::mutate(
+      state = state_abbr,
+      metric_basis = metric_basis,
+      law_band = factor(likert, levels = 1:5, labels = c("F", "D", "C", "B", "A"), ordered = TRUE),
+      strictness_group = dplyr::case_when(
+        likert %in% c(4, 5) ~ "Strict (4-5)",
+        likert %in% c(1, 2, 3) ~ "Less strict (1-3)",
+        TRUE ~ NA_character_
+      )
+    )
+
+  if (nrow(out) < 10) return(NULL)
+  out
+}
+
+yearly_analysis <- setNames(vector("list", length(panel_years)), as.character(panel_years))
+for (yr in panel_years) yearly_analysis[[as.character(yr)]] <- build_year_df(yr)
+
+cat("Yearly chart frame years:\n")
+print(panel_years)
+
+yearly_quality <- tibble::tibble(year = panel_years) |>
+  dplyr::mutate(
+    states_after_join = purrr::map_int(year, ~{
+      df <- yearly_analysis[[as.character(.x)]]
+      if (is.null(df)) 0L else nrow(df)
+    }),
+    metric_basis = purrr::map_chr(year, ~{
+      df <- yearly_analysis[[as.character(.x)]]
+      if (is.null(df) || !("metric_basis" %in% names(df))) NA_character_ else unique(df$metric_basis)[1]
+    })
+  )
+print(yearly_quality, n = Inf)
+
+panel_rate_max <- max(
+  purrr::map_dbl(yearly_analysis, ~ if (is.null(.x)) NA_real_ else max(.x$rate_per_100k, na.rm = TRUE)),
+  na.rm = TRUE
+)
+panel_rate_max <- ceiling(panel_rate_max / 10) * 10
+
+state_sf_panel <- usmap::us_map(regions = "states")
+state_coords_panel <- as.data.frame(sf::st_coordinates(state_sf_panel$geom))
+state_attr_panel <- state_sf_panel |>
+  sf::st_drop_geometry() |>
+  dplyr::mutate(row_id = dplyr::row_number())
+
+base_state_shapes <- state_coords_panel |>
+  dplyr::transmute(
+    row_id = L3,
+    group = paste(L3, L2, L1, sep = "-"),
+    x = X,
+    y = Y
+  ) |>
+  dplyr::left_join(
+    state_attr_panel |>
+      dplyr::select(row_id, abbr),
+    by = "row_id"
+  ) |>
+  dplyr::transmute(state_abbr = abbr, x = x, y = y, group = group) |>
+  dplyr::filter(state_abbr != "PR")
+```
+
+### 1) Gun-law strictness map by year
+
+Accessibility color note:
+We use a colorblind-safe categorical palette with strong hue separation (blue/sky/gray/orange/orange-red) so adjacent grade bands remain distinguishable for common color-vision deficiencies.
+
+```{r yearly-laws-map, fig.height=5.5, fig.width=10}
+for (yr in panel_years) {
+  df <- yearly_analysis[[as.character(yr)]]
+  if (is.null(df)) next
+  basis_txt <- paste(unique(df$metric_basis), collapse = ", ")
+
+  p <- plot_usmap(data = df, values = "law_band") +
+    scale_fill_manual(
+      values = c("F" = "#D55E00", "D" = "#E69F00", "C" = "#999999", "B" = "#56B4E9", "A" = "#0072B2"),
+      breaks = c("A", "B", "C", "D", "F"),
+      drop = FALSE,
+      na.translate = FALSE,
+      name = "Law grade band (A-F)"
+    ) +
+    labs(title = glue("Gun Law Strictness Map (A blue -> F red) ({yr})"),
+         subtitle = glue("Colorblind-safe palette (A→F) • Mortality source: {basis_txt}")) +
+    theme_void() +
+    theme(legend.position = "right")
+
+  print(p)
+}
+```
+
+### 2) Mortality map by year
+
+Accessibility color note:
+We use `viridis` (option C), a perceptually uniform, colorblind-safe sequential scale so equal numeric changes are visually consistent and legible.
+
+```{r yearly-mortality-map, fig.height=5.5, fig.width=10}
+for (yr in panel_years) {
+  df <- yearly_analysis[[as.character(yr)]]
+  if (is.null(df)) next
+  basis_txt <- paste(unique(df$metric_basis), collapse = ", ")
+
+  p <- plot_usmap(data = df, values = "rate_per_100k") +
+    scale_fill_viridis_c(option = "C", name = "Deaths per 100k", limits = c(0, panel_rate_max)) +
+    labs(
+      title = glue("Mortality rate by state ({yr})"),
+      subtitle = glue("Source: {basis_txt}")
+    ) +
+    theme_void() +
+    theme(legend.position = "right")
+
+  print(p)
+}
+```
+
+### 3) Combined map by year (color + resized polygons)
+
+Accessibility color note:
+Strictness uses the same colorblind-safe categorical palette for consistency, and the second encoding (state size) does not rely on color perception alone.
+
+```{r yearly-combined-map, fig.height=5.5, fig.width=10}
+for (yr in panel_years) {
+  df <- yearly_analysis[[as.character(yr)]]
+  if (is.null(df)) next
+  basis_txt <- paste(unique(df$metric_basis), collapse = ", ")
+
+  group_mean_of_means_year <- df |>
+    dplyr::group_by(strictness_group) |>
+    dplyr::summarize(group_mean = mean(rate_per_100k, na.rm = TRUE), .groups = "drop") |>
+    dplyr::summarize(mom = mean(group_mean, na.rm = TRUE)) |>
+    dplyr::pull(mom)
+
+  shapes <- base_state_shapes |>
+    dplyr::left_join(df |> dplyr::select(state_abbr, rate_per_100k, law_band), by = "state_abbr")
+
+  cent <- shapes |>
+    dplyr::group_by(state_abbr) |>
+    dplyr::summarize(
+      cx = mean(x, na.rm = TRUE),
+      cy = mean(y, na.rm = TRUE),
+      rate_per_100k = dplyr::first(rate_per_100k),
+      law_band = dplyr::first(law_band),
+      .groups = "drop"
+    ) |>
+    dplyr::mutate(
+      rel_from_mean = (rate_per_100k - group_mean_of_means_year) / group_mean_of_means_year,
+      scale_factor = pmin(pmax(1 + 0.7 * rel_from_mean, 0.55), 1.55)
+    )
+
+  center_us <- cent |> dplyr::summarize(ux = mean(cx, na.rm = TRUE), uy = mean(cy, na.rm = TRUE))
+
+  exploded <- shapes |>
+    dplyr::left_join(cent |> dplyr::select(state_abbr, cx, cy, scale_factor), by = "state_abbr") |>
+    dplyr::mutate(
+      x_shift = 0.45 * (cx - center_us$ux),
+      y_shift = 0.45 * (cy - center_us$uy),
+      x_border = x + x_shift,
+      y_border = y + y_shift,
+      x2 = cx + (x - cx) * scale_factor + x_shift,
+      y2 = cy + (y - cy) * scale_factor + y_shift
+    )
+
+  p <- ggplot() +
+    geom_polygon(data = exploded, aes(x = x2, y = y2, group = group, fill = law_band), color = "white", linewidth = 0.2) +
+    geom_polygon(data = exploded, aes(x = x_border, y = y_border, group = group), fill = NA, color = "#00e676", linetype = "22", linewidth = 0.35) +
+    scale_fill_manual(
+      values = c("F" = "#D55E00", "D" = "#E69F00", "C" = "#999999", "B" = "#56B4E9", "A" = "#0072B2"),
+      breaks = c("A", "B", "C", "D", "F"),
+      drop = FALSE, na.translate = FALSE, name = "Law grade band (A-F)"
+    ) +
+    coord_equal() +
+    labs(title = glue("Combined map ({yr})"),
+         subtitle = glue("Color = strictness; size = distance from mean of group means • Source: {basis_txt}")) +
+    theme_void() +
+    theme(legend.position = "right")
+
+  print(p)
+}
+```
+
+### 4) Weighted decomposition by year
+
+Accessibility color note:
+Group fills use high-contrast, colorblind-safe hues (blue vs orange-red), and the mean reference is additionally encoded by dashed line/label, not color alone.
+
+```{r yearly-weighted-decomp, fig.height=5.5, fig.width=10}
+for (yr in panel_years) {
+  df <- yearly_analysis[[as.character(yr)]]
+  if (is.null(df)) next
+  basis_txt <- paste(unique(df$metric_basis), collapse = ", ")
+
+  gs <- df |>
+    dplyr::group_by(strictness_group) |>
+    dplyr::summarize(states = n(), mean_rate_per_100k = mean(rate_per_100k, na.rm = TRUE), .groups = "drop") |>
+    dplyr::mutate(strictness_group = factor(strictness_group, levels = c("Strict (4-5)", "Less strict (1-3)"))) |>
+    dplyr::arrange(strictness_group) |>
+    dplyr::mutate(xmin = dplyr::lag(cumsum(states), default = 0), xmax = cumsum(states))
+
+  mom <- mean(gs$mean_rate_per_100k, na.rm = TRUE)
+
+  p <- ggplot(gs) +
+    geom_rect(aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = mean_rate_per_100k, fill = strictness_group), color = "white") +
+    geom_hline(yintercept = mom, linetype = "dashed", linewidth = 1, color = "black") +
+    annotate("text", x = sum(gs$states) + 1, y = mom + 0.35, label = paste0(round(mom, 1), " mean"), hjust = 0, vjust = 0, size = 3.1) +
+    scale_fill_manual(values = c("Less strict (1-3)" = "#D55E00", "Strict (4-5)" = "#0072B2")) +
+    scale_x_continuous(limits = c(0, sum(gs$states) + 3), breaks = seq(0, sum(gs$states), by = 10), minor_breaks = NULL) +
+    labs(title = glue("Weighted decomposition ({yr})"),
+         subtitle = glue("Dashed line/label = mean of group means • Source: {basis_txt}"),
+         x = "Cumulative state count", y = "Group mean deaths per 100k", fill = "Group") +
+    theme_minimal() +
+    theme(panel.grid = element_blank())
+
+  print(p)
+}
+```
+
+### 5) Violin + quantile box by year
+
+Accessibility color note:
+Group fills use colorblind-safe contrast, while medians, quantile boxes, and point markers provide shape/position cues independent of color.
+
+```{r yearly-violin, fig.height=5.5, fig.width=10, results='asis'}
+for (yr in panel_years) {
+  df <- yearly_analysis[[as.character(yr)]]
+  if (is.null(df)) next
+  basis_txt <- paste(unique(df$metric_basis), collapse = ", ")
+
+  gs_mom <- df |>
+    dplyr::group_by(strictness_group) |>
+    dplyr::summarize(group_mean = mean(rate_per_100k, na.rm = TRUE), .groups = "drop") |>
+    dplyr::summarize(mom = mean(group_mean, na.rm = TRUE)) |>
+    dplyr::pull(mom)
+
+  low_df <- df |> dplyr::group_by(strictness_group) |> dplyr::slice_min(order_by = rate_per_100k, n = 1, with_ties = FALSE) |> dplyr::ungroup()
+  med_df <- df |>
+    dplyr::group_by(strictness_group) |>
+    dplyr::mutate(grp_median = median(rate_per_100k, na.rm = TRUE), med_dist = abs(rate_per_100k - grp_median)) |>
+    dplyr::slice_min(order_by = med_dist, n = 1, with_ties = FALSE) |>
+    dplyr::ungroup() |>
+    dplyr::select(-grp_median, -med_dist)
+  high_df <- df |> dplyr::group_by(strictness_group) |> dplyr::slice_max(order_by = rate_per_100k, n = 1, with_ties = FALSE) |> dplyr::ungroup()
+  v_labels <- dplyr::bind_rows(low_df, med_df, high_df) |> dplyr::mutate(state_abbr = toupper(state_abbr))
+
+  p <- ggplot(df, aes(x = strictness_group, y = rate_per_100k, fill = strictness_group)) +
+    geom_violin(alpha = 0.35, trim = FALSE) +
+    geom_boxplot(width = 0.2, outlier.shape = NA) +
+    geom_point(data = v_labels, color = "gray45", size = 2.5) +
+    geom_text(data = v_labels, aes(label = state_abbr), color = "gray30", nudge_x = 0.25, hjust = 0, vjust = 0, size = 3.5, show.legend = FALSE) +
+    stat_summary(fun = mean, geom = "point", shape = 21, size = 3, fill = "yellow") +
+    geom_hline(yintercept = gs_mom, linetype = "dashed", linewidth = 1, color = "black") +
+    labs(
+      title = glue("Distribution by group with quantile box ({yr})"),
+      subtitle = glue("Source: {basis_txt}"),
+      x = "Strictness group",
+      y = "Deaths per 100k",
+      fill = "Group"
+    ) +
+    scale_y_continuous(breaks = seq(0, panel_rate_max, by = 10), minor_breaks = NULL) +
+    theme_minimal() +
+    theme(
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.grid.major.y = element_line(color = "gray80", linewidth = 0.3)
+    )
+
+  print(p)
+
+  dist_tbl <- df |>
+    dplyr::filter(!is.na(strictness_group), !is.na(rate_per_100k)) |>
+    dplyr::group_by(strictness_group) |>
+    dplyr::summarize(
+      n = dplyr::n(),
+      mean_rate = mean(rate_per_100k, na.rm = TRUE),
+      median_rate = median(rate_per_100k, na.rm = TRUE),
+      skew = {
+        m <- mean(rate_per_100k, na.rm = TRUE)
+        s <- sd(rate_per_100k, na.rm = TRUE)
+        if (is.na(s) || s == 0) NA_real_ else mean((rate_per_100k - m)^3, na.rm = TRUE) / (s^3)
+      },
+      shapiro_p = if (dplyr::n() >= 3 && dplyr::n() <= 5000) shapiro.test(rate_per_100k)$p.value else NA_real_,
+      .groups = "drop"
+    ) |>
+    dplyr::mutate(
+      distribution_class = dplyr::case_when(
+        is.na(skew) ~ "Undetermined",
+        abs(skew) < 0.2 & !is.na(shapiro_p) & shapiro_p > 0.05 ~ "Approximately normal",
+        skew >= 0.75 ~ "Right skew",
+        skew >= 0.2 ~ "Mild right skew",
+        skew <= -0.75 ~ "Left skew",
+        skew <= -0.2 ~ "Mild left skew",
+        TRUE ~ "Non-normal, near symmetric"
+      ),
+      year = yr
+    ) |>
+    dplyr::select(strictness_group, distribution_class, year, n, mean_rate, median_rate, skew, shapiro_p) |>
+    dplyr::mutate(
+      strictness_group = factor(strictness_group, levels = c("Strict (4-5)", "Less strict (1-3)"))
+    ) |>
+    dplyr::arrange(strictness_group) |>
+    dplyr::mutate(
+      mean_rate = round(mean_rate, 2),
+      median_rate = round(median_rate, 2),
+      skew = round(skew, 3),
+      shapiro_p = round(shapiro_p, 4)
+    )
+
+  print(
+    knitr::kable(
+      dist_tbl,
+      caption = glue("Distribution classification ({yr})"),
+      align = c("l", "l", "c", "r", "r", "r", "r", "r")
+    )
+  )
+  cat("\n\n")
+}
+```
+
+## Visualizing group means (mean-of-means reference)
+
+Accessibility color note:
+These group comparison charts use a high-contrast blue vs orange-red pair and also encode meaning with line style, point shape, and position so key comparisons remain readable without color cues.
 
 ```{r mean-diff-visuals, fig.height=5.5, fig.width=10}
 group_summary <- analysis_df |>
@@ -686,11 +1111,11 @@ group_summary <- analysis_df |>
   mutate(strictness_group = factor(strictness_group, levels = c("Strict (4-5)", "Less strict (1-3)")))
 
 overall_weighted_mean <- mean(analysis_df$rate_per_100k, na.rm = TRUE)
-unweighted_group_mean <- mean(group_summary$mean_rate_per_100k, na.rm = TRUE)
+group_mean_of_means <- mean(group_summary$mean_rate_per_100k, na.rm = TRUE)
 
 mean_compare <- tibble::tibble(
   metric = "Deaths per 100k",
-  unweighted = unweighted_group_mean,
+  mean_of_group_means = group_mean_of_means,
   weighted = overall_weighted_mean
 )
 
@@ -706,20 +1131,20 @@ decomp <- group_summary |>
 
 p_weighted_decomp <- ggplot(decomp) +
   geom_rect(aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = mean_rate_per_100k, fill = strictness_group), color = "white") +
-  geom_hline(yintercept = overall_weighted_mean, linetype = "dashed", linewidth = 1, color = "black") +
+  geom_hline(yintercept = group_mean_of_means, linetype = "dashed", linewidth = 1, color = "black") +
   annotate(
     "text",
     x = sum(decomp$states) + 1,
-    y = overall_weighted_mean + 0.35,
-    label = paste0(round(overall_weighted_mean, 1), " mean"),
+    y = group_mean_of_means + 0.35,
+    label = paste0(round(group_mean_of_means, 1), " mean"),
     hjust = 0,
     vjust = 0,
     size = 3.1
   ) +
   scale_fill_manual(
     values = c(
-      "Less strict (1-3)" = "#c62828",
-      "Strict (4-5)" = "#0b3c8c"
+      "Less strict (1-3)" = "#D55E00",
+      "Strict (4-5)" = "#0072B2"
     )
   ) +
   scale_x_continuous(
@@ -729,7 +1154,7 @@ p_weighted_decomp <- ggplot(decomp) +
   ) +
   labs(
     title = "2) Weighted decomposition (bar width = group share)",
-    subtitle = "Dashed line and label indicate the weighted overall mean.",
+    subtitle = "Dashed line and label indicate the mean of group means.",
     x = "Cumulative state count",
     y = "Group mean deaths per 100k",
     fill = "Group"
@@ -788,7 +1213,7 @@ p_violin <- ggplot(analysis_df, aes(x = strictness_group, y = rate_per_100k, fil
     show.legend = FALSE
   ) +
   stat_summary(fun = mean, geom = "point", shape = 21, size = 3, fill = "yellow") +
-  geom_hline(yintercept = overall_weighted_mean, linetype = "dashed", linewidth = 1, color = "black") +
+  geom_hline(yintercept = group_mean_of_means, linetype = "dashed", linewidth = 1, color = "black") +
   labs(
     title = "6) Distribution by group with quantile box (IQR)",
     x = "Strictness group",
@@ -835,7 +1260,7 @@ distribution_classification <- analysis_df |>
       TRUE ~ "Non-normal, near symmetric"
     )
   ) |>
-  select(strictness_group, n, mean_rate, median_rate, skew, shapiro_p, distribution_class)
+  select(strictness_group, distribution_class, n, mean_rate, median_rate, skew, shapiro_p)
 
 distribution_classification
 ```
@@ -951,3 +1376,99 @@ out_pptx
 
 - Add a **panel** across years (1999–present) with a mixed model or state fixed effects
 - Add outlier slides highlighting states with strict laws but high rates (and vice versa)
+
+# Optional: probe how far back GIFFORDS is parseable
+
+Run this chunk manually if you want to test earliest available scorecard years.
+
+```{r giffords-year-probe, eval=FALSE}
+scorecard_url <- function(year) {
+  if (year == 2024) {
+    "https://giffords.org/resources/scorecard2024/"
+  } else {
+    paste0("https://giffords.org/lawcenter/resources/scorecard", year, "/")
+  }
+}
+
+grade_to_likert <- function(g) {
+  g <- stringr::str_trim(g)
+  dplyr::case_when(
+    stringr::str_detect(g, "^A") ~ 5,
+    stringr::str_detect(g, "^B") ~ 4,
+    stringr::str_detect(g, "^C") ~ 3,
+    stringr::str_detect(g, "^D") ~ 2,
+    stringr::str_detect(g, "^F") ~ 1,
+    TRUE ~ NA_real_
+  )
+}
+
+scrape_scorecard_year <- function(year) {
+  url <- scorecard_url(year)
+  page <- rvest::read_html(url)
+
+  tabs <- page |> rvest::html_elements("table") |> rvest::html_table(fill = TRUE)
+  if (length(tabs) > 0) {
+    cand <- tabs[[which.max(purrr::map_int(tabs, nrow))]] |> janitor::clean_names()
+
+    if (any(stringr::str_detect(names(cand), "grade")) &&
+        any(stringr::str_detect(names(cand), "state|name"))) {
+
+      state_col <- names(cand)[which(stringr::str_detect(names(cand), "state|name"))[1]]
+      grade_col <- names(cand)[which(stringr::str_detect(names(cand), "grade"))[1]]
+
+      out <- cand |>
+        dplyr::transmute(
+          state = as.character(.data[[state_col]]) |> stringr::str_squish(),
+          grade = as.character(.data[[grade_col]]) |> stringr::str_squish(),
+          year  = year,
+          likert = grade_to_likert(grade)
+        ) |>
+        dplyr::filter(state %in% state.name) |>
+        dplyr::distinct()
+
+      if (nrow(out) >= 45) return(out)
+    }
+  }
+
+  txt <- page |> rvest::html_text2()
+  pos <- stringr::str_locate(txt, stringr::fixed("Gun Law Strength", ignore_case = TRUE))[1,1]
+  if (is.na(pos)) stop("marker_not_found")
+
+  tail_txt <- stringr::str_sub(txt, pos, pos + 30000)
+  tail_txt <- stringr::str_replace_all(tail_txt, "【[^】]*】", " ")
+  tail_txt <- stringr::str_squish(tail_txt)
+
+  m <- stringr::str_match_all(
+    tail_txt,
+    "\\b\\d{1,2}\\s+([A-Za-z ]+?)\\s+(A\\+|A-|A|B\\+|B-|B|C\\+|C-|C|D\\+|D-|D|F)\\b"
+  )[[1]]
+
+  if (nrow(m) == 0) stop("no_pairs")
+
+  tibble::tibble(
+    state = stringr::str_squish(m[,2]),
+    grade = m[,3],
+    year = year
+  ) |>
+    dplyr::filter(state %in% state.name) |>
+    dplyr::mutate(likert = grade_to_likert(grade)) |>
+    dplyr::distinct()
+}
+
+years_to_test <- 2008:2024
+
+probe <- purrr::map_dfr(years_to_test, function(y) {
+  u <- scorecard_url(y)
+  out <- tryCatch(scrape_scorecard_year(y), error = function(e) e)
+  if (inherits(out, "error")) {
+    tibble::tibble(year = y, ok = FALSE, n_states = NA_integer_, note = conditionMessage(out), url = u)
+  } else {
+    tibble::tibble(year = y, ok = nrow(out) >= 45, n_states = nrow(out), note = "ok", url = u)
+  }
+})
+
+print(probe, n = Inf)
+
+good_years <- probe |> dplyr::filter(ok) |> dplyr::pull(year)
+cat("\nEarliest good year:", ifelse(length(good_years) > 0, min(good_years), NA), "\n")
+```
