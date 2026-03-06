@@ -545,6 +545,8 @@ p_laws <- plot_usmap(data = analysis_df, values = "law_band") +
       "D" = "#E69F00",
       "F" = "#D55E00"
     ),
+    limits = c("A", "B", "C", "D", "F"),
+    breaks = c("A", "B", "C", "D", "F"),
     drop = FALSE,
     na.translate = FALSE,
     name = "Law grade band (A-F)"
@@ -677,6 +679,7 @@ p_combo <- ggplot() +
       "B" = "#56B4E9",
       "A" = "#0072B2"
     ),
+    limits = c("A", "B", "C", "D", "F"),
     breaks = c("A", "B", "C", "D", "F"),
     drop = FALSE,
     na.translate = FALSE,
@@ -794,6 +797,11 @@ build_year_df <- function(target_year) {
 
 yearly_analysis <- setNames(vector("list", length(panel_years)), as.character(panel_years))
 for (yr in panel_years) yearly_analysis[[as.character(yr)]] <- build_year_df(yr)
+yearly_plot_laws <- list()
+yearly_plot_mortality <- list()
+yearly_plot_combined <- list()
+yearly_plot_weighted <- list()
+yearly_plot_violin <- list()
 
 cat("Yearly chart frame years:\n")
 print(panel_years)
@@ -853,6 +861,7 @@ for (yr in panel_years) {
   p <- plot_usmap(data = df, values = "law_band") +
     scale_fill_manual(
       values = c("F" = "#D55E00", "D" = "#E69F00", "C" = "#999999", "B" = "#56B4E9", "A" = "#0072B2"),
+      limits = c("A", "B", "C", "D", "F"),
       breaks = c("A", "B", "C", "D", "F"),
       drop = FALSE,
       na.translate = FALSE,
@@ -864,6 +873,7 @@ for (yr in panel_years) {
     theme(legend.position = "right")
 
   print(p)
+  yearly_plot_laws[[as.character(yr)]] <- p
 }
 ```
 
@@ -888,6 +898,7 @@ for (yr in panel_years) {
     theme(legend.position = "right")
 
   print(p)
+  yearly_plot_mortality[[as.character(yr)]] <- p
 }
 ```
 
@@ -943,6 +954,7 @@ for (yr in panel_years) {
     geom_polygon(data = exploded, aes(x = x_border, y = y_border, group = group), fill = NA, color = "#00e676", linetype = "22", linewidth = 0.35) +
     scale_fill_manual(
       values = c("F" = "#D55E00", "D" = "#E69F00", "C" = "#999999", "B" = "#56B4E9", "A" = "#0072B2"),
+      limits = c("A", "B", "C", "D", "F"),
       breaks = c("A", "B", "C", "D", "F"),
       drop = FALSE, na.translate = FALSE, name = "Law grade band (A-F)"
     ) +
@@ -953,6 +965,7 @@ for (yr in panel_years) {
     theme(legend.position = "right")
 
   print(p)
+  yearly_plot_combined[[as.character(yr)]] <- p
 }
 ```
 
@@ -989,6 +1002,7 @@ for (yr in panel_years) {
     theme(panel.grid = element_blank())
 
   print(p)
+  yearly_plot_weighted[[as.character(yr)]] <- p
 }
 ```
 
@@ -1042,6 +1056,7 @@ for (yr in panel_years) {
     )
 
   print(p)
+  yearly_plot_violin[[as.character(yr)]] <- p
 
   dist_tbl <- df |>
     dplyr::filter(!is.na(strictness_group), !is.na(rate_per_100k)) |>
@@ -1281,6 +1296,76 @@ cor_spear
 summary(lm_fit)
 ```
 
+# Export all charts to files (PNG + SVG)
+
+```{r export-charts}
+export_dir <- "imaages"
+dir.create(export_dir, showWarnings = FALSE, recursive = TRUE)
+
+p_scatter_export <- ggplot(analysis_df, aes(x = likert, y = rate_per_100k)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.85) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:5) +
+  labs(
+    title = "Association: strictness vs mortality",
+    subtitle = glue("Spearman rho = {round(unname(cor_spear$estimate), 2)} (p={signif(cor_spear$p.value, 3)})"),
+    x = "Strictness (1 = lax … 5 = strict)",
+    y = "Deaths per 100k"
+  ) +
+  theme_minimal()
+
+main_plots <- list(
+  "main_01_laws_heatmap" = p_laws,
+  "main_02_mortality_heatmap" = p_mortality,
+  "main_03_combined_heatmap" = p_combo,
+  "main_04_scatter_association" = p_scatter_export,
+  "main_05_weighted_decomposition" = p_weighted_decomp,
+  "main_06_violin_quantile_box" = p_violin
+)
+
+save_plot_pair <- function(plot_obj, stem, width = 11, height = 6) {
+  ggplot2::ggsave(
+    filename = file.path(export_dir, paste0(stem, ".png")),
+    plot = plot_obj,
+    width = width,
+    height = height,
+    dpi = 320
+  )
+  ggplot2::ggsave(
+    filename = file.path(export_dir, paste0(stem, ".svg")),
+    plot = plot_obj,
+    width = width,
+    height = height,
+    device = "svg"
+  )
+}
+
+for (nm in names(main_plots)) {
+  save_plot_pair(main_plots[[nm]], nm)
+}
+
+for (yr in panel_years) {
+  y <- as.character(yr)
+  if (!is.null(yearly_plot_laws[[y]])) {
+    save_plot_pair(yearly_plot_laws[[y]], paste0("year_", y, "_01_laws_heatmap"))
+  }
+  if (!is.null(yearly_plot_mortality[[y]])) {
+    save_plot_pair(yearly_plot_mortality[[y]], paste0("year_", y, "_02_mortality_heatmap"))
+  }
+  if (!is.null(yearly_plot_combined[[y]])) {
+    save_plot_pair(yearly_plot_combined[[y]], paste0("year_", y, "_03_combined_heatmap"))
+  }
+  if (!is.null(yearly_plot_weighted[[y]])) {
+    save_plot_pair(yearly_plot_weighted[[y]], paste0("year_", y, "_04_weighted_decomposition"))
+  }
+  if (!is.null(yearly_plot_violin[[y]])) {
+    save_plot_pair(yearly_plot_violin[[y]], paste0("year_", y, "_05_violin_quantile_box"))
+  }
+}
+
+list.files(export_dir) |> sort() |> head(20)
+```
+
 # PPT generation (Path B): officer + rvg
 
 This section creates a PowerPoint file with **editable vector charts**.
@@ -1289,7 +1374,7 @@ After creating the PPT, open it in PowerPoint and **Ungroup** the chart objects 
 ```{r make-ppt}
 ppt <- read_pptx()
 
-# Slide 1: Title
+# Slide 1: Title / research question
 ppt <- ppt |>
   add_slide(layout = "Title Slide", master = "Office Theme") |>
   ph_with(
@@ -1301,19 +1386,65 @@ ppt <- ppt |>
     location = ph_location_type(type = "subTitle")
   )
 
-# Slide 2: Mortality heatmap
-ppt <- ppt |>
-  add_slide(layout = "Title and Content", master = "Office Theme") |>
-  ph_with("Firearm mortality by state (CDC)", location = ph_location_type(type = "title")) |>
-  ph_with(dml(ggobj = p_mortality), location = ph_location_type(type = "body"))
+# Slide 2: Assignment framing
+assignment_text <- paste(
+  "Story goal:",
+  "Assess whether stricter state gun laws are associated with lower firearm mortality.",
+  "",
+  "Assignment requirements covered:",
+  "1) CDC firearm mortality data via API (data.cdc.gov / SODA)",
+  "2) 5-point Likert scale for gun-law strictness",
+  "3) Determine whether stricter laws are linked to reduced deaths",
+  "4) Present findings with heat maps using accessible color palettes",
+  sep = "\n"
+)
 
-# Slide 3: Laws heatmap
 ppt <- ppt |>
   add_slide(layout = "Title and Content", master = "Office Theme") |>
-  ph_with("Gun-law strictness (Likert 1–5)", location = ph_location_type(type = "title")) |>
+  ph_with("Assignment Context & Question", location = ph_location_type(type = "title")) |>
+  ph_with(assignment_text, location = ph_location_type(type = "body"))
+
+# Slide 3: Data + Likert method
+method_text <- paste(
+  "Data sources:",
+  "• CDC state firearm mortality rates per 100,000 (SODA API endpoint: fpsi-y8tj)",
+  "• GIFFORDS annual state gun-law grades (A+ to F), scraped and cached",
+  "",
+  "5-point Likert mapping (strictness):",
+  "• 5 = A+, A, A-",
+  "• 4 = B+, B, B-",
+  "• 3 = C+, C, C-",
+  "• 2 = D+, D, D-",
+  "• 1 = F",
+  "",
+  glue("Analysis year used: {analysis_year} (latest overlap with full state coverage)"),
+  sep = "\n"
+)
+
+ppt <- ppt |>
+  add_slide(layout = "Title and Content", master = "Office Theme") |>
+  ph_with("Data Pipeline & Likert Construction", location = ph_location_type(type = "title")) |>
+  ph_with(method_text, location = ph_location_type(type = "body"))
+
+# Slide 4: Laws heatmap (accessible palette)
+ppt <- ppt |>
+  add_slide(layout = "Title and Content", master = "Office Theme") |>
+  ph_with("Heat Map 1: Gun-Law Strictness (Likert 1–5)", location = ph_location_type(type = "title")) |>
   ph_with(dml(ggobj = p_laws), location = ph_location_type(type = "body"))
 
-# Slide 4: Association plot
+# Slide 5: Mortality heatmap (accessible palette)
+ppt <- ppt |>
+  add_slide(layout = "Title and Content", master = "Office Theme") |>
+  ph_with("Heat Map 2: Firearm Mortality by State (CDC)", location = ph_location_type(type = "title")) |>
+  ph_with(dml(ggobj = p_mortality), location = ph_location_type(type = "body"))
+
+# Slide 6: Combined map
+ppt <- ppt |>
+  add_slide(layout = "Title and Content", master = "Office Theme") |>
+  ph_with("Heat Map 3: Combined Strictness + Mortality Distance", location = ph_location_type(type = "title")) |>
+  ph_with(dml(ggobj = p_combo), location = ph_location_type(type = "body"))
+
+# Slide 7: Association plot
 p_scatter <- ggplot(analysis_df, aes(x = likert, y = rate_per_100k)) +
   geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.85) +
   geom_smooth(method = "lm", se = FALSE) +
@@ -1328,34 +1459,73 @@ p_scatter <- ggplot(analysis_df, aes(x = likert, y = rate_per_100k)) +
 
 ppt <- ppt |>
   add_slide(layout = "Title and Content", master = "Office Theme") |>
-  ph_with("Do stricter laws correlate with lower mortality?", location = ph_location_type(type = "title")) |>
+  ph_with("Association Check: Strictness vs Mortality", location = ph_location_type(type = "title")) |>
   ph_with(dml(ggobj = p_scatter), location = ph_location_type(type = "body"))
 
-# Slide 5: Methods / notes
-methods_text <- paste(
-  "Data:",
-  "• Firearm mortality rates from CDC (data.cdc.gov) via SODA API (state + county).",
-  "• Mortality time window begins 1999 for a consistent modern series.",
+# Slides 8+: Export all yearly charts to PPT
+if (exists("panel_years") && length(panel_years) > 0) {
+  for (yr in panel_years) {
+    y <- as.character(yr)
+
+    if (!is.null(yearly_plot_laws[[y]])) {
+      ppt <- ppt |>
+        add_slide(layout = "Title and Content", master = "Office Theme") |>
+        ph_with(glue("Year {yr}: Gun-Law Strictness Heat Map"), location = ph_location_type(type = "title")) |>
+        ph_with(dml(ggobj = yearly_plot_laws[[y]]), location = ph_location_type(type = "body"))
+    }
+
+    if (!is.null(yearly_plot_mortality[[y]])) {
+      ppt <- ppt |>
+        add_slide(layout = "Title and Content", master = "Office Theme") |>
+        ph_with(glue("Year {yr}: Firearm Mortality Heat Map"), location = ph_location_type(type = "title")) |>
+        ph_with(dml(ggobj = yearly_plot_mortality[[y]]), location = ph_location_type(type = "body"))
+    }
+
+    if (!is.null(yearly_plot_combined[[y]])) {
+      ppt <- ppt |>
+        add_slide(layout = "Title and Content", master = "Office Theme") |>
+        ph_with(glue("Year {yr}: Combined Strictness + Mortality Map"), location = ph_location_type(type = "title")) |>
+        ph_with(dml(ggobj = yearly_plot_combined[[y]]), location = ph_location_type(type = "body"))
+    }
+
+    if (!is.null(yearly_plot_weighted[[y]])) {
+      ppt <- ppt |>
+        add_slide(layout = "Title and Content", master = "Office Theme") |>
+        ph_with(glue("Year {yr}: Weighted Decomposition"), location = ph_location_type(type = "title")) |>
+        ph_with(dml(ggobj = yearly_plot_weighted[[y]]), location = ph_location_type(type = "body"))
+    }
+
+    if (!is.null(yearly_plot_violin[[y]])) {
+      ppt <- ppt |>
+        add_slide(layout = "Title and Content", master = "Office Theme") |>
+        ph_with(glue("Year {yr}: Violin + Quantile Box"), location = ph_location_type(type = "title")) |>
+        ph_with(dml(ggobj = yearly_plot_violin[[y]]), location = ph_location_type(type = "body"))
+    }
+  }
+}
+
+# Final slide: Results + conclusion
+result_direction <- ifelse(unname(cor_spear$estimate) < 0, "negative", "positive")
+
+conclusion_text <- paste(
+  "Key result:",
+  glue("• Spearman rho = {round(unname(cor_spear$estimate), 2)} ({result_direction} association), p = {signif(cor_spear$p.value, 3)}"),
   "",
-  "Gun-law strictness:",
-  "• GIFFORDS annual state grades (A+ to F) are scraped from public scorecard pages (2012–2024).",
-  "• Grades are collapsed to a 5-point Likert scale:",
-  "  5=A-range, 4=B-range, 3=C-range, 2=D-range, 1=F.",
-  "• Scraping safeguards: cached CSV output, light pacing between requests, and fallback parsing.",
+  "Interpretation:",
+  "• In this cross-sectional state-year view, higher strictness tends to align with lower mortality when rho is negative.",
+  "• This supports an association, not causal proof.",
   "",
-  "Year alignment:",
-  "• The analysis year is set to the most recent year available in BOTH CDC and GIFFORDS (law_year_used).",
-  "",
-  "Analysis:",
-  "• Cross-sectional summary by Likert bin, Spearman correlation, and linear regression.",
-  "• Results describe association only; confounding and policy endogeneity remain limitations.",
+  "Limitations:",
+  "• Potential confounding (demographics, urbanicity, poverty, enforcement, etc.)",
+  "• Policy endogeneity and timing effects",
+  "• Single-year comparison for the core assignment question",
   sep = "\n"
 )
 
 ppt <- ppt |>
   add_slide(layout = "Title and Content", master = "Office Theme") |>
-  ph_with("Methods & limitations (for your write-up)", location = ph_location_type(type = "title")) |>
-  ph_with(methods_text, location = ph_location_type(type = "body"))
+  ph_with("Conclusion: Do Stricter Laws Reduce Mortality?", location = ph_location_type(type = "title")) |>
+  ph_with(conclusion_text, location = ph_location_type(type = "body"))
 
 out_pptx <- "Gun_Laws_CDC_GIFFORDS.pptx"
 print(ppt, target = out_pptx)
