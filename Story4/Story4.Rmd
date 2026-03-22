@@ -1,0 +1,367 @@
+---
+title: "Story 3: How Much Do Data Practitioners Get Paid?"
+author: "Randy Howk"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    df_print: paged
+    theme: readable
+  pdf_document:
+    toc: true
+    number_sections: true
+fontsize: 11pt
+geometry: margin=1in
+---
+
+# Overview
+
+This story answers a simple question: **How much do data practitioners get paid, and how much does that vary by role and by state?**
+
+The assignment rubric emphasizes clarity, simplicity, saliency, and fidelity, so this draft uses a **Tufte-style low data-to-ink approach**:
+
+- a **ranked dot plot** to show which role descriptors tend to command the highest average pay
+- a **compact state-by-role heatmap** to show how geography shifts pay within each role
+- direct labels, restrained color, and minimal non-data ink
+
+# Story development focus
+
+## Focus point: visual choice + slide messaging technique
+
+The development focus for this story is **visual choice** supported by a clear **slide/story message**.
+
+The design decision is intentional:
+
+1. First answer the role question with the clearest possible visual: a **ranked dot plot**.
+2. Then answer the geography question with a **dense but readable heatmap** that lets the reader scan all states at once.
+3. Strip away chart junk so the viewer sees the story immediately.
+
+That focus supports the rubric in four ways:
+
+- **Simplicity:** no 3D effects, heavy borders, decorative legends, or redundant labels
+- **Saliency:** the highest-paying roles and highest-paying states visually stand out first
+- **Efficacy:** the two visuals divide the analytical task into two easy reading steps
+- **Amity:** the story can be understood with very little effort
+
+# Data and methods
+
+## Data source
+
+This analysis uses the **U.S. Bureau of Labor Statistics (BLS) Occupational Employment and Wage Statistics (OEWS), May 2024 state wage estimates**.
+
+Why this source:
+
+- it is a credible public source
+- it provides state-level wage estimates
+- it reports average annual wages by occupation
+- it is more reliable for this assignment than crowdsourced salary sites
+
+## Role mapping
+
+A practical limitation is that BLS reports salary by **standard occupation**, not by every employer-specific job title.
+
+So this first stab maps broad role descriptors to the closest BLS occupational titles:
+
+| Role descriptor | BLS occupation used | Why |
+|---|---|---|
+| Data Scientist | Data Scientists | direct match |
+| Data Analyst | Operations Research Analysts | close analytical/decision-support match |
+| Data Engineer | Database Architects | closest published data-platform / warehouse design role |
+| Data Architect | Database Architects | direct architecture-oriented data role |
+| Business Analyst | Management Analysts | closest published business analysis / process improvement role |
+
+> **Important limitation:** this mapping is an analytical approximation, not a claim that every employer uses these titles the same way. That tradeoff preserves **fidelity** by using a trustworthy wage source while still answering the assignment's broader "data practitioner" question.
+
+# Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 10,
+  fig.height = 6
+)
+
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(readxl)
+  library(janitor)
+  library(scales)
+  library(glue)
+  library(forcats)
+  library(knitr)
+})
+
+theme_set(
+  theme_minimal(base_size = 12) +
+    theme(
+      panel.grid.minor = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      axis.title = element_text(face = "bold"),
+      plot.title = element_text(face = "bold", size = 16),
+      plot.subtitle = element_text(size = 11, margin = margin(b = 8)),
+      plot.caption = element_text(size = 9, color = "grey30"),
+      legend.position = "top"
+    )
+)
+```
+
+# Import BLS state wage data
+
+```{r import-bls}
+# May 2024 OEWS state file distributed by BLS as a zip that contains an XLSX.
+bls_zip_url <- "https://www.bls.gov/oes/special-requests/oesm24st.zip"
+dir.create("data", showWarnings = FALSE)
+zip_path <- file.path("data", "oesm24st.zip")
+
+if (!file.exists(zip_path)) {
+  download.file(bls_zip_url, destfile = zip_path, mode = "wb")
+}
+
+unzip_dir <- file.path("data", "oesm24st")
+dir.create(unzip_dir, showWarnings = FALSE)
+unzip(zip_path, exdir = unzip_dir)
+
+xlsx_file <- list.files(unzip_dir, pattern = "\\.xlsx$", full.names = TRUE)
+stopifnot(length(xlsx_file) >= 1)
+
+# Read the first worksheet and normalize names.
+# The BLS state workbook layout is stable, but this code stays slightly defensive.
+bls_raw <- read_excel(xlsx_file[1], sheet = 1) |> clean_names()
+
+# Keep only the columns we need if they exist.
+required_cols <- c("area_title", "occ_title", "tot_emp", "a_mean")
+missing_cols <- setdiff(required_cols, names(bls_raw))
+if (length(missing_cols) > 0) {
+  stop(glue("Missing expected BLS columns: {paste(missing_cols, collapse = ', ')}"))
+}
+
+glimpse(bls_raw)
+```
+
+# Clean and map the occupations
+
+```{r clean-map}
+role_crosswalk <- tribble(
+  ~role_descriptor,   ~occ_title,
+  "Data Scientist",  "Data Scientists",
+  "Data Analyst",    "Operations Research Analysts",
+  "Data Engineer",   "Database Architects",
+  "Data Architect",  "Database Architects",
+  "Business Analyst", "Management Analysts"
+)
+
+salary_state <- bls_raw |>
+  transmute(
+    state = area_title,
+    occ_title,
+    tot_emp = suppressWarnings(as.numeric(tot_emp)),
+    a_mean = suppressWarnings(as.numeric(a_mean))
+  ) |>
+  inner_join(role_crosswalk, by = "occ_title") |>
+  filter(!is.na(a_mean)) |>
+  filter(!state %in% c("United States", "Guam", "Puerto Rico", "Virgin Islands")) |>
+  distinct(state, role_descriptor, .keep_all = TRUE)
+
+# Order roles by the median state wage so the story reads from lower to higher pay.
+role_order <- salary_state |>
+  group_by(role_descriptor) |>
+  summarise(median_state_salary = median(a_mean, na.rm = TRUE), .groups = "drop") |>
+  arrange(median_state_salary) |>
+  pull(role_descriptor)
+
+state_order <- salary_state |>
+  group_by(state) |>
+  summarise(overall_state_median = median(a_mean, na.rm = TRUE), .groups = "drop") |>
+  arrange(overall_state_median) |>
+  pull(state)
+
+salary_state <- salary_state |>
+  mutate(
+    role_descriptor = factor(role_descriptor, levels = role_order),
+    state = factor(state, levels = state_order)
+  )
+
+summary_by_role <- salary_state |>
+  group_by(role_descriptor) |>
+  summarise(
+    median_state_salary = median(a_mean, na.rm = TRUE),
+    lowest_state_salary = min(a_mean, na.rm = TRUE),
+    highest_state_salary = max(a_mean, na.rm = TRUE),
+    spread = highest_state_salary - lowest_state_salary,
+    .groups = "drop"
+  ) |>
+  arrange(median_state_salary)
+
+summary_by_role
+```
+
+# Key takeaways
+
+```{r key-metrics}
+role_leader <- summary_by_role |> slice_max(median_state_salary, n = 1)
+role_laggard <- summary_by_role |> slice_min(median_state_salary, n = 1)
+widest_spread <- summary_by_role |> slice_max(spread, n = 1)
+
+highest_observation <- salary_state |> slice_max(a_mean, n = 1)
+lowest_observation  <- salary_state |> slice_min(a_mean, n = 1)
+```
+
+- The highest-paid role, using the **median across states**, is **`r role_leader$role_descriptor`** at about **`r dollar(role_leader$median_state_salary)`**.
+- The lowest-paid role in this role set is **`r role_laggard$role_descriptor`** at about **`r dollar(role_laggard$median_state_salary)`**.
+- The widest state-to-state pay spread appears in **`r widest_spread$role_descriptor`**, where the gap between the lowest- and highest-paying states is about **`r dollar(widest_spread$spread)`**.
+- The single highest state-role estimate in this mapped set is **`r highest_observation$role_descriptor`** in **`r highest_observation$state`** at **`r dollar(highest_observation$a_mean)`**.
+- The single lowest state-role estimate in this mapped set is **`r lowest_observation$role_descriptor`** in **`r lowest_observation$state`** at **`r dollar(lowest_observation$a_mean)`**.
+
+# Visual 1: Which role descriptors pay more?
+
+```{r role-dot-plot, fig.height=5.5}
+plot_role <- summary_by_role |>
+  ggplot(aes(x = median_state_salary, y = fct_reorder(role_descriptor, median_state_salary))) +
+  geom_segment(
+    aes(x = 0, xend = median_state_salary, yend = role_descriptor),
+    linewidth = 0.7,
+    color = "grey75"
+  ) +
+  geom_point(size = 3) +
+  geom_text(
+    aes(label = dollar(median_state_salary)),
+    hjust = -0.1,
+    size = 3.5
+  ) +
+  scale_x_continuous(labels = dollar_format(), expand = expansion(mult = c(0, .12))) +
+  labs(
+    title = "Role descriptor matters more than the label 'data practitioner'",
+    subtitle = "Median state-level average salary, May 2024 BLS OEWS estimates",
+    x = "Average annual salary",
+    y = NULL,
+    caption = "Direct labels replace a legend. Ordering is intentional: lowest to highest typical state pay."
+  )
+
+plot_role
+```
+
+## Why this chart works
+
+This chart is the simplest way to answer the first half of the question.
+
+- It avoids a busy bar chart.
+- It ranks roles immediately.
+- It uses direct labels instead of making the reader bounce between axes and legends.
+- It foregrounds the **message** rather than the decoration.
+
+# Visual 2: How much does state change pay?
+
+```{r heatmap, fig.height=11}
+plot_heatmap <- salary_state |>
+  ggplot(aes(x = role_descriptor, y = state, fill = a_mean)) +
+  geom_tile(color = "white", linewidth = 0.2) +
+  scale_fill_gradient(
+    low = "grey95",
+    high = "grey25",
+    labels = dollar_format()
+  ) +
+  labs(
+    title = "State still matters, but the pattern is easiest to see role-by-role",
+    subtitle = "Each tile is a BLS state average annual wage estimate for the mapped occupation",
+    x = NULL,
+    y = NULL,
+    fill = "Average salary",
+    caption = "States are ordered by their across-role median salary. Roles are ordered by their median state salary."
+  ) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(face = "bold"),
+    axis.text.y = element_text(size = 7),
+    legend.key.width = unit(1.4, "in")
+  )
+
+plot_heatmap
+```
+
+## Why this chart works
+
+The heatmap answers the second half of the question efficiently.
+
+A small-multiple map or a set of fifty-state bar charts would use much more ink and force much more effort from the reader. This heatmap keeps the task simple:
+
+- compare **down columns** to see how state changes salary within a role
+- compare **across rows** to see whether some states tend to pay more across roles
+- use one compact view instead of several repetitive charts
+
+# Supporting table
+
+```{r supporting-table}
+summary_table <- salary_state |>
+  group_by(role_descriptor) |>
+  summarise(
+    typical_state_salary = median(a_mean, na.rm = TRUE),
+    min_state_salary = min(a_mean, na.rm = TRUE),
+    max_state_salary = max(a_mean, na.rm = TRUE),
+    state_spread = max_state_salary - min_state_salary,
+    .groups = "drop"
+  ) |>
+  arrange(desc(typical_state_salary)) |>
+  mutate(across(where(is.numeric), dollar))
+
+kable(summary_table, caption = "Compact summary of role-level variation across states")
+```
+
+# Interpretation
+
+The story is not simply that "data people earn a lot." The more useful story is:
+
+1. **Role descriptor changes expected pay materially.** The gap between the highest- and lowest-paying mapped roles is large enough that a generic label like "data practitioner" hides meaningful variation.
+2. **State changes pay inside each role.** Even within the same mapped occupation, geography shifts average salary substantially.
+3. **Role and state should be read together.** A person deciding between roles, locations, or recruiting markets needs both dimensions in the same story.
+
+# Rubric alignment
+
+## Simplicity
+
+The visuals remove nonessential ink:
+
+- no 3D, gradients for decoration, or chart borders
+- no duplicated legends and axis labels
+- no overloaded dashboard layout
+
+## Fidelity
+
+The analysis uses a reputable public source and states its main limitation openly: role descriptors are mapped to standard occupations rather than treated as identical.
+
+## Utility
+
+The charts answer the exact assignment prompt: variation in average salary by **role descriptor** and by **state**.
+
+## Saliency
+
+The ranked role plot highlights the main message first, while the heatmap makes the state pattern visible without distracting from the headline.
+
+## Uniformity
+
+Both visuals use the same visual grammar: minimalist theme, direct labeling, limited color, and ordered categories.
+
+## Amity
+
+The reader should understand the story quickly because the structure is sequential:
+
+- first: which roles pay more
+- second: where states shift the answer
+
+# What I would improve in a second draft
+
+If you want to strengthen this submission further, the next version could:
+
+1. add a short annotation layer that calls out the top and bottom states for one or two roles
+2. replace the summary table with a labeled slope/dumbbell chart for state spread by role
+3. test an alternate mapping for **Data Analyst** if your instructor prefers a different BLS proxy occupation
+4. add a small note on cost of living, while keeping the main chart on nominal pay so the story stays faithful to the source data
+
+# Sources
+
+- U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics (OEWS), May 2024 state wage estimates
+- U.S. Bureau of Labor Statistics occupation definitions for Data Scientists, Operations Research Analysts, Database Architects, and Management Analysts
