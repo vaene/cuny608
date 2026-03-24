@@ -12,6 +12,14 @@ export interface SalaryByRegionRecord extends SalaryRecord {
   region: string;
 }
 
+export interface SalaryByRegionEnrichedRecord extends SalaryByRegionRecord {
+  locationName: string;
+  popDensity: number | null;
+  popDensityCategory: string;
+  cola: number | null;
+  colaCategory: string;
+}
+
 export type SalaryMatrix = Record<string, Record<string, number>>;
 
 export const ROLE_COLORS: Record<string, string> = {
@@ -31,15 +39,32 @@ export const REGION_COLORS: Record<string, string> = {
   Remote: "#475569"
 };
 
+// Location type colors (for COLA/Density-based view)
+export const LOCATION_TYPE_COLORS: Record<string, string> = {
+  "Urban High-COLA": "#DC2626",      // Red - most expensive
+  "Suburban Medium-COLA": "#F59E0B",  // Amber - moderate
+  "Distributed Low-COLA": "#10B981",  // Green - lower cost
+  "Rural Low-COLA": "#30A46C",        // Darker green - lowest cost
+  "Remote (No Geography)": "#6B7280"  // Gray - neutral
+};
+
 export const LEVEL_ORDER = ["Junior", "Mid-Level", "Senior"] as const;
 export const REGION_ORDER = ["Northeast", "Southeast", "Midwest", "Southwest", "West", "Remote"] as const;
+export const LOCATION_TYPE_ORDER = [
+  "Urban High-COLA",
+  "Suburban Medium-COLA",
+  "Distributed Low-COLA",
+  "Rural Low-COLA",
+  "Remote (No Geography)"
+] as const;
 
 export const STORY4_SLIDES = [
   { href: "/", label: "Intro" },
-  { href: "/salary-role", label: "Role" },
-  { href: "/salary-level", label: "Level" },
-  { href: "/salary-region", label: "Region" },
-  { href: "/salary-region-role", label: "Region x Role" },
+  { href: "/salary-role", label: "By Role" },
+  { href: "/location-context", label: "Location Context" },
+  { href: "/salary-by-location-type", label: "By Location Type" },
+  { href: "/cola-analysis", label: "COLA Impact" },
+  { href: "/density-analysis", label: "Density Impact" },
   { href: "/sources", label: "Sources" }
 ] as const;
 
@@ -82,4 +107,15 @@ export function getRoleColor(role: string): string {
 
 export function getRegionColor(region: string): string {
   return REGION_COLORS[region] ?? "#6B7280";
+}
+
+export function getLocationTypeColor(locationType: string): string {
+  return LOCATION_TYPE_COLORS[locationType] ?? "#6B7280";
+}
+
+export function getSalaryDifference(salary: number, avgSalary: number): string {
+  const diff = salary - avgSalary;
+  if (diff > 0) return `+${formatCurrencyCompact(diff)}`;
+  if (diff < 0) return `${formatCurrencyCompact(diff)}`;
+  return "Neutral";
 }
