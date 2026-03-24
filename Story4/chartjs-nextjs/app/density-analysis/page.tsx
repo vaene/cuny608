@@ -1,213 +1,120 @@
 'use client';
 
-import { useEffect, useRef, useState } from "react";
-import {
-  ScatterController,
-  BubbleController,
-  Chart as ChartJS,
-  type ChartConfigurationCustomTypesPerDataset,
-  type ChartDataset,
-  type BubbleDataPoint,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend,
-  LineController,
-  LineElement,
-  type Point,
-  type TooltipItem
-} from "chart.js";
+import { useEffect, useState } from "react";
 
 import StoryShell from "@/components/StoryShell";
 import {
   formatCurrency,
-  getLocationTypeColor,
-  hexToRgba,
   loadJSON,
-  type SalaryByRegionEnrichedRecord
+  type SalaryByRegionEnrichedRecord,
+  type SalaryMatrix
 } from "@/lib/salaryData";
 
-ChartJS.register(
-  ScatterController,
-  BubbleController,
-  LineController,
-  LineElement,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend
-);
+interface HeatmapCell {
+  region: string;
+  role: string;
+  nominal: number;
+  cola: number;
+  real: number;
+}
+
+const ROLE_ORDER = [
+  "Data Architect",
+  "Data Scientist",
+  "Data Engineer",
+  "Business Analyst",
+  "Data Analyst"
+] as const;
+
+const REGION_ORDER = [
+  "West",
+  "Northeast",
+  "Southwest",
+  "Midwest",
+  "Southeast"
+] as const;
+
+function getHeatColor(value: number, min: number, max: number): string {
+  const range = max - min || 1;
+  const t = Math.max(0, Math.min(1, (value - min) / range));
+
+  const red = Math.round(248 - t * 156);
+  const green = Math.round(250 - t * 26);
+  const blue = Math.round(240 - t * 154);
+
+  return `rgb(${red}, ${green}, ${blue})`;
+}
+
+function getTextColor(value: number, min: number, max: number): string {
+  const range = max - min || 1;
+  const t = Math.max(0, Math.min(1, (value - min) / range));
+  return t > 0.58 ? "#ffffff" : "#111827";
+}
 
 export default function DensityAnalysisPage() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const chartRef = useRef<ChartJS | null>(null);
+  const [cells, setCells] = useState<HeatmapCell[]>([]);
   const [status, setStatus] = useState("Loading data...");
 
   useEffect(() => {
     let active = true;
 
-    async function renderChart() {
+    async function loadData() {
       try {
-        const data = await loadJSON<SalaryByRegionEnrichedRecord[]>("/data/salary-by-region-enriched.json");
-        if (!active || !canvasRef.current) return;
+        const [matrix, enriched] = await Promise.all([
+          loadJSON<SalaryMatrix>("/data/salary-region-role.json"),
+          loadJSON<SalaryByRegionEnrichedRecord[]>("/data/salary-by-region-enriched.json")
+        ]);
 
-        // Filter out Remote since it has no density
-        const regions = data.filter((r) => r.popDensity !== null);
+        if (!active) return;
 
-        // Calculate simple linear relationship for trendline
-        const xs = regions.map((r) => r.popDensity!);
-        const ys = regions.map((r) => r.mean);
-        const n = xs.length;
+        const colaByRegion = Object.fromEntries(
+          enriched.filter((record) => record.cola !== null).map((record) => [record.region, record.cola as number])
+        );
 
-        const meanX = xs.reduce((a, b) => a + b) / n;
-        const meanY = ys.reduce((a, b) => a + b) / n;
-        const numerator = xs.reduce((sum, x, i) => sum + (x - meanX) * (ys[i] - meanY), 0);
-        const denominator = xs.reduce((sum, x) => sum + (x - meanX) ** 2, 0);
-        const slope = denominator !== 0 ? numerator / denominator : 0;
-        const intercept = meanY - slope * meanX;
+        const realCells: HeatmapCell[] = [];
 
-        const densityMin = Math.min(...xs);
-        const densityMax = Math.max(...xs);
-        const maxBubbleRadius = Math.max(...regions.map((region) => Math.sqrt(region.count) * 2));
-        const xPadding = Math.max(180, Math.ceil(maxBubbleRadius * 5));
-        const trendlineData = [
-          { x: densityMin - xPadding, y: slope * (densityMin - xPadding) + intercept },
-          { x: densityMax + xPadding, y: slope * (densityMax + xPadding) + intercept }
-        ];
+        for (const region of REGION_ORDER) {
+          const cola = colaByRegion[region];
+          if (!cola || !matrix[region]) continue;
 
-        const bubbleDatasets: ChartDataset<"bubble", BubbleDataPoint[]>[] = regions.map((region) => {
-          const color = getLocationTypeColor(region.locationName);
-          return {
-            type: "bubble",
-            label: region.region,
-            data: [
-              {
-                x: region.popDensity!,
-                y: region.mean,
-                r: Math.sqrt(region.count) * 2
-              }
-            ],
-            backgroundColor: hexToRgba(color, 0.6),
-            borderColor: color,
-            borderWidth: 2,
-            clip: false
-          };
-        });
+          for (const role of ROLE_ORDER) {
+            const nominal = matrix[region][role];
+            if (!nominal) continue;
 
-        const trendlineDataset: ChartDataset<"line", Point[]> = {
-          label: "Trend",
-          data: trendlineData,
-          type: "line",
-          borderColor: "#9CA3AF",
-          borderWidth: 2,
-          borderDash: [5, 5],
-          fill: false,
-          pointRadius: 0,
-          tension: 0
-        };
-
-        const config: ChartConfigurationCustomTypesPerDataset = {
-          data: {
-            datasets: [...bubbleDatasets, trendlineDataset]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: {
-              duration: 850
-            },
-            layout: {
-              padding: {
-                top: 36,
-                right: 40,
-                bottom: 36,
-                left: 28
-              }
-            },
-            plugins: {
-              legend: {
-                position: "right" as const,
-                labels: {
-                  usePointStyle: true
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  title() {
-                    return "";
-                  },
-                  label(context: TooltipItem<"bubble" | "line">) {
-                    const point = context.raw as BubbleDataPoint;
-                    return `Density: ${point.x.toFixed(0)} people/sq mi | Avg Salary: ${formatCurrency(point.y)}`;
-                  }
-                }
-              }
-            },
-            scales: {
-              x: {
-                type: "linear",
-                title: {
-                  display: true,
-                  text: "Population Density (people per sq mi)"
-                },
-                min: Math.max(0, Math.floor(densityMin - xPadding)),
-                max: Math.ceil(densityMax + xPadding),
-                offset: true,
-                grace: "10%",
-                ticks: {
-                  callback(value: string | number) {
-                    return String(value);
-                  }
-                }
-              },
-              y: {
-                title: {
-                  display: true,
-                  text: "Average Salary ($)"
-                },
-                min: 75000,
-                max: 160000,
-                offset: true,
-                grace: 0,
-                ticks: {
-                  callback(value: string | number) {
-                    return formatCurrency(Number(value));
-                  }
-                }
-              }
-            }
+            realCells.push({
+              region,
+              role,
+              nominal,
+              cola,
+              real: nominal / (cola / 100)
+            });
           }
-        };
-
-        if (chartRef.current) {
-          chartRef.current.destroy();
         }
 
-        if (canvasRef.current) {
-          chartRef.current = new ChartJS(canvasRef.current, config);
-        }
+        setCells(realCells);
         setStatus("");
       } catch (error) {
-        console.error("Error rendering chart:", error);
+        console.error("Error loading real purchasing power data:", error);
         setStatus(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     }
 
-    renderChart();
+    loadData();
 
     return () => {
       active = false;
-      if (chartRef.current) {
-        chartRef.current.destroy();
-      }
     };
   }, []);
+
+  const realValues = cells.map((cell) => cell.real);
+  const minReal = realValues.length ? Math.min(...realValues) : 0;
+  const maxReal = realValues.length ? Math.max(...realValues) : 0;
 
   return (
     <StoryShell
       currentPath="/density-analysis"
-      title="Population Density Impact on Salary"
-      subtitle="Does higher density correlate with higher compensation?"
+      title="Real Purchasing Power by Role and Region"
+      subtitle="COLA-adjusted salary reveals which role-region combinations stretch furthest after local costs are considered"
     >
       <div className="flex h-full flex-col">
         <section className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 p-6">
@@ -215,64 +122,132 @@ export default function DensityAnalysisPage() {
             Focus
           </div>
           <p className="mt-2 text-sm leading-6 text-blue-900">
-            This slide tests the other half of the claim. It asks whether
-            <strong> population density adds explanatory power </strong>
-            to the salary pattern alongside COLA, rather than salary differences being only a cost-of-living story.
+            This slide brings the focus together by translating nominal salary into
+            <strong> COLA-adjusted purchasing power </strong>
+            for each role-region combination. It shows where the combination of salary level and local cost
+            structure produces the strongest real economic value.
           </p>
         </section>
 
-        <div className="relative flex-none" style={{ height: "32rem" }}>
-          {status && (
-            <div className="flex items-center justify-center text-sm text-gray-500">
-              {status}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5">
+          {status ? (
+            <div className="flex min-h-[24rem] items-center justify-center text-sm text-gray-500">{status}</div>
+          ) : (
+            <div className="space-y-4">
+              <div
+                className="grid gap-3"
+                style={{
+                  gridTemplateColumns: `minmax(140px, 1.15fr) repeat(${ROLE_ORDER.length}, minmax(120px, 1fr))`
+                }}
+              >
+                <div className="px-2 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                  Region
+                </div>
+                {ROLE_ORDER.map((role) => (
+                  <div
+                    key={role}
+                    className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-gray-500"
+                  >
+                    {role}
+                  </div>
+                ))}
+
+                {REGION_ORDER.map((region) => (
+                  <FragmentRow
+                    key={region}
+                    region={region}
+                    roleOrder={ROLE_ORDER}
+                    cells={cells.filter((cell) => cell.region === region)}
+                    minReal={minReal}
+                    maxReal={maxReal}
+                  />
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-xl bg-gray-50 px-4 py-3 text-xs text-gray-600">
+                <span>Lower real purchasing power</span>
+                <div className="h-3 flex-1 rounded-full bg-gradient-to-r from-[#f8faf0] via-[#b6dcb3] to-[#5ca36c]" />
+                <span>Higher real purchasing power</span>
+              </div>
             </div>
           )}
-          <canvas ref={canvasRef} className="h-full w-full" />
         </div>
 
         <div className="mt-8 space-y-4 border-t border-gray-200 pt-6">
           <div className="rounded-lg bg-blue-50 p-4">
             <h3 className="font-semibold text-blue-900">Interpretation</h3>
             <p className="mt-2 text-sm text-blue-800">
-              <strong>X-axis (Population Density):</strong> People per square mile. Higher = more urban.
-              <br />
-              <strong>Y-axis (Average Salary):</strong> Nominal annual compensation.
-              <br />
-              <strong>Bubble size:</strong> Represents sample size (larger = more workers).
-              <br />
-              <strong>Bubbles farther from the line:</strong> When a region sits noticeably above or below the trend
-              line, density alone does not fully explain its salary level. That suggests other regional factors are
-              also shaping pay.
-            </p>
-          </div>
-
-          <div className="rounded-lg bg-purple-50 p-4">
-            <h3 className="font-semibold text-purple-900">Key Finding</h3>
-            <p className="mt-2 text-sm text-purple-800">
-              <strong>Strong positive correlation:</strong> Higher density regions command higher salaries. 
-              The Northeast ({formatCurrency(128450)} at 815 people/sq mi) outpaces the Midwest ({formatCurrency(105300)} at 102 people/sq mi) 
-              by {formatCurrency(23150)}, roughly proportional to the 8x density difference. However, this reflects 
-              both infrastructure cost premiums <em>and</em> concentration of tech hubs in dense regions. In the
-              story focus, this slide shows why density works alongside COLA rather than replacing it.
+              Each cell shows nominal salary adjusted by local COLA using
+              <strong> salary / (COLA / 100)</strong>.
+              Darker green cells indicate stronger real purchasing power after accounting for local costs.
+              Remote is excluded because it has no geographic COLA anchor.
             </p>
           </div>
 
           <div className="rounded-lg bg-green-50 p-4">
-            <h3 className="font-semibold text-green-900">Real Purchasing Power Note</h3>
+            <h3 className="font-semibold text-green-900">Key Finding</h3>
             <p className="mt-2 text-sm text-green-800">
-              While density strongly predicts salary, it doesn&apos;t predict <em>real wealth</em>. A {formatCurrency(105300)} 
-              salary in the low-density Midwest (COLA 92) may provide more disposable income than {formatCurrency(128450)} 
-              in the Northeast (COLA 114). The interaction of both factors determines actual purchasing power.
+              High nominal salaries do not always produce the strongest real outcome. Roles in the
+              Midwest and Southwest often hold up well after COLA adjustment, while some high-salary
+              coastal roles lose ground once local costs are accounted for.
             </p>
           </div>
 
           <p className="text-xs text-gray-600">
-            Remote workers are excluded from this analysis. The next slide summarizes findings 
-            and connects salary variation back to the original focus that salary differences mainly reflect
-            the combined effects of COLA and population density.
+            This final view complements the earlier nominal salary charts by showing the practical buying power
+            of each role-region combination, not just the posted salary level.
           </p>
         </div>
       </div>
     </StoryShell>
+  );
+}
+
+function FragmentRow({
+  region,
+  roleOrder,
+  cells,
+  minReal,
+  maxReal
+}: {
+  region: string;
+  roleOrder: readonly string[];
+  cells: HeatmapCell[];
+  minReal: number;
+  maxReal: number;
+}) {
+  const cola = cells[0]?.cola;
+
+  return (
+    <>
+      <div className="flex items-center px-2 py-4 text-sm font-semibold text-gray-900">
+        <div>
+          <div>{region}</div>
+          <div className="text-xs font-normal text-gray-500">COLA {cola}</div>
+        </div>
+      </div>
+
+      {roleOrder.map((role) => {
+        const cell = cells.find((entry) => entry.role === role);
+        if (!cell) {
+          return <div key={`${region}-${role}`} className="rounded-xl border border-gray-100 bg-gray-50 p-4" />;
+        }
+
+        return (
+          <div
+            key={`${region}-${role}`}
+            className="rounded-xl border border-white/60 p-4 text-center shadow-sm"
+            style={{
+              backgroundColor: getHeatColor(cell.real, minReal, maxReal),
+              color: getTextColor(cell.real, minReal, maxReal)
+            }}
+            title={`${region} | ${role} | Nominal ${formatCurrency(cell.nominal)} | Real ${formatCurrency(cell.real)}`}
+          >
+            <div className="text-lg font-semibold">{formatCurrency(cell.real)}</div>
+            <div className="mt-1 text-xs opacity-80">Nominal {formatCurrency(cell.nominal)}</div>
+          </div>
+        );
+      })}
+    </>
   );
 }
