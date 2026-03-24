@@ -5,11 +5,17 @@ import {
   ScatterController,
   BubbleController,
   Chart as ChartJS,
-  type ChartConfiguration,
+  type ChartConfigurationCustomTypesPerDataset,
+  type ChartDataset,
+  type BubbleDataPoint,
   LinearScale,
   PointElement,
   Tooltip,
-  Legend
+  Legend,
+  LineController,
+  LineElement,
+  type Point,
+  type TooltipItem
 } from "chart.js";
 
 import StoryShell from "@/components/StoryShell";
@@ -21,11 +27,20 @@ import {
   type SalaryByRegionEnrichedRecord
 } from "@/lib/salaryData";
 
-ChartJS.register(ScatterController, BubbleController, LinearScale, PointElement, Tooltip, Legend);
+ChartJS.register(
+  ScatterController,
+  BubbleController,
+  LineController,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  Legend
+);
 
 export default function DensityAnalysisPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const chartRef = useRef<ChartJS<"bubble"> | null>(null);
+  const chartRef = useRef<ChartJS | null>(null);
   const [status, setStatus] = useState("Loading data...");
 
   useEffect(() => {
@@ -53,14 +68,17 @@ export default function DensityAnalysisPage() {
 
         const densityMin = Math.min(...xs);
         const densityMax = Math.max(...xs);
+        const maxBubbleRadius = Math.max(...regions.map((region) => Math.sqrt(region.count) * 2));
+        const xPadding = Math.max(180, Math.ceil(maxBubbleRadius * 5));
         const trendlineData = [
-          { x: densityMin - 100, y: slope * (densityMin - 100) + intercept },
-          { x: densityMax + 100, y: slope * (densityMax + 100) + intercept }
+          { x: densityMin - xPadding, y: slope * (densityMin - xPadding) + intercept },
+          { x: densityMax + xPadding, y: slope * (densityMax + xPadding) + intercept }
         ];
 
-        const datasets = regions.map((region) => {
+        const bubbleDatasets: ChartDataset<"bubble", BubbleDataPoint[]>[] = regions.map((region) => {
           const color = getLocationTypeColor(region.locationName);
           return {
+            type: "bubble",
             label: region.region,
             data: [
               {
@@ -71,33 +89,40 @@ export default function DensityAnalysisPage() {
             ],
             backgroundColor: hexToRgba(color, 0.6),
             borderColor: color,
-            borderWidth: 2
+            borderWidth: 2,
+            clip: false
           };
         });
 
-        // Add trendline
-        datasets.push({
+        const trendlineDataset: ChartDataset<"line", Point[]> = {
           label: "Trend",
           data: trendlineData,
-          type: "line" as any,
+          type: "line",
           borderColor: "#9CA3AF",
           borderWidth: 2,
           borderDash: [5, 5],
           fill: false,
           pointRadius: 0,
           tension: 0
-        } as any);
+        };
 
-        const config: ChartConfiguration<"bubble"> = {
-          type: "bubble",
+        const config: ChartConfigurationCustomTypesPerDataset = {
           data: {
-            datasets
+            datasets: [...bubbleDatasets, trendlineDataset]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
               duration: 850
+            },
+            layout: {
+              padding: {
+                top: 36,
+                right: 40,
+                bottom: 36,
+                left: 28
+              }
             },
             plugins: {
               legend: {
@@ -111,8 +136,8 @@ export default function DensityAnalysisPage() {
                   title() {
                     return "";
                   },
-                  label(context: any) {
-                    const point = context.raw as any;
+                  label(context: TooltipItem<"bubble" | "line">) {
+                    const point = context.raw as BubbleDataPoint;
                     return `Density: ${point.x.toFixed(0)} people/sq mi | Avg Salary: ${formatCurrency(point.y)}`;
                   }
                 }
@@ -125,10 +150,12 @@ export default function DensityAnalysisPage() {
                   display: true,
                   text: "Population Density (people per sq mi)"
                 },
-                min: 0,
-                max: 900,
+                min: Math.max(0, Math.floor(densityMin - xPadding)),
+                max: Math.ceil(densityMax + xPadding),
+                offset: true,
+                grace: "10%",
                 ticks: {
-                  callback(value: any) {
+                  callback(value: string | number) {
                     return String(value);
                   }
                 }
@@ -138,10 +165,12 @@ export default function DensityAnalysisPage() {
                   display: true,
                   text: "Average Salary ($)"
                 },
-                min: 90000,
-                max: 140000,
+                min: 75000,
+                max: 160000,
+                offset: true,
+                grace: 0,
                 ticks: {
-                  callback(value: any) {
+                  callback(value: string | number) {
                     return formatCurrency(Number(value));
                   }
                 }
@@ -154,7 +183,9 @@ export default function DensityAnalysisPage() {
           chartRef.current.destroy();
         }
 
-        chartRef.current = new ChartJS(canvasRef.current, config);
+        if (canvasRef.current) {
+          chartRef.current = new ChartJS(canvasRef.current, config);
+        }
         setStatus("");
       } catch (error) {
         console.error("Error rendering chart:", error);
@@ -179,13 +210,24 @@ export default function DensityAnalysisPage() {
       subtitle="Does higher density correlate with higher compensation?"
     >
       <div className="flex h-full flex-col">
-        <div className="relative flex-1">
+        <section className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 p-6">
+          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-800">
+            Focus
+          </div>
+          <p className="mt-2 text-sm leading-6 text-blue-900">
+            This slide tests the other half of the claim. It asks whether
+            <strong> population density adds explanatory power </strong>
+            to the salary pattern alongside COLA, rather than salary differences being only a cost-of-living story.
+          </p>
+        </section>
+
+        <div className="relative flex-none" style={{ height: "32rem" }}>
           {status && (
             <div className="flex items-center justify-center text-sm text-gray-500">
               {status}
             </div>
           )}
-          <canvas ref={canvasRef} />
+          <canvas ref={canvasRef} className="h-full w-full" />
         </div>
 
         <div className="mt-8 space-y-4 border-t border-gray-200 pt-6">
@@ -197,6 +239,10 @@ export default function DensityAnalysisPage() {
               <strong>Y-axis (Average Salary):</strong> Nominal annual compensation.
               <br />
               <strong>Bubble size:</strong> Represents sample size (larger = more workers).
+              <br />
+              <strong>Bubbles farther from the line:</strong> When a region sits noticeably above or below the trend
+              line, density alone does not fully explain its salary level. That suggests other regional factors are
+              also shaping pay.
             </p>
           </div>
 
@@ -206,14 +252,15 @@ export default function DensityAnalysisPage() {
               <strong>Strong positive correlation:</strong> Higher density regions command higher salaries. 
               The Northeast ({formatCurrency(128450)} at 815 people/sq mi) outpaces the Midwest ({formatCurrency(105300)} at 102 people/sq mi) 
               by {formatCurrency(23150)}, roughly proportional to the 8x density difference. However, this reflects 
-              both infrastructure cost premiums <em>and</em> concentration of tech hubs in dense regions.
+              both infrastructure cost premiums <em>and</em> concentration of tech hubs in dense regions. In the
+              story focus, this slide shows why density works alongside COLA rather than replacing it.
             </p>
           </div>
 
           <div className="rounded-lg bg-green-50 p-4">
             <h3 className="font-semibold text-green-900">Real Purchasing Power Note</h3>
             <p className="mt-2 text-sm text-green-800">
-              While density strongly predicts salary, it doesn't predict <em>real wealth</em>. A {formatCurrency(105300)} 
+              While density strongly predicts salary, it doesn&apos;t predict <em>real wealth</em>. A {formatCurrency(105300)} 
               salary in the low-density Midwest (COLA 92) may provide more disposable income than {formatCurrency(128450)} 
               in the Northeast (COLA 114). The interaction of both factors determines actual purchasing power.
             </p>
@@ -221,7 +268,8 @@ export default function DensityAnalysisPage() {
 
           <p className="text-xs text-gray-600">
             Remote workers are excluded from this analysis. The next slide summarizes findings 
-            and connects salary variation back to the original assignment focus.
+            and connects salary variation back to the original focus that salary differences mainly reflect
+            the combined effects of COLA and population density.
           </p>
         </div>
       </div>

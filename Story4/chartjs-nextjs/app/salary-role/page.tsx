@@ -129,9 +129,22 @@ export default function SalaryRolePage() {
     <StoryShell
       currentPath="/salary-role"
       title="Role Descriptor Is The First Big Salary Split"
-      subtitle="Data Architect and Data Scientist sit at the top of the ranking, while analyst roles trail by a wide margin."
+      subtitle="This slide is a role-only baseline across all locations, not a high- or low-COLA / density comparison."
     >
-      <div className="grid h-full gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.9fr)]">
+      <div className="space-y-8">
+        <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-800">
+            Focus
+          </div>
+          <p className="mt-2 text-sm leading-6 text-blue-900">
+            This slide isolates the part of salary variation explained by
+            <strong> role </strong>
+            alone. It establishes the baseline before we test whether the remaining differences are mainly
+            associated with COLA and population density.
+          </p>
+        </section>
+
+        <div className="grid h-full gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.9fr)]">
         <section className="relative min-h-[420px] rounded-2xl border border-gray-200 bg-white p-4">
           {status ? (
             <div className="flex h-full items-center justify-center text-sm text-gray-500">{status}</div>
@@ -149,9 +162,13 @@ export default function SalaryRolePage() {
           </p>
           <p className="mt-4 text-sm leading-6 text-gray-700">
             That gap suggests the term &ldquo;data practitioner&rdquo; hides several distinct labor markets.
-            Role family matters before we even account for seniority or geography.
+            These values are averaged across the full dataset, so this slide establishes the role baseline
+            before the later slides introduce geography, COLA, and population density. In other words,
+            this slide sets up the focus by showing what role explains first, before we test how much of
+            the remaining salary variation comes from COLA and density.
           </p>
         </aside>
+        </div>
       </div>
     </StoryShell>
   );

@@ -10,7 +10,22 @@ export default function Home() {
       title="How Much Do Data Practitioners Get Paid?"
       subtitle="Geographic salary variation driven by population density and cost of living."
     >
-      <div className="grid h-full gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(260px,0.8fr)]">
+      <div className="space-y-8">
+        <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-800">
+            Focus
+          </div>
+          <p className="mt-2 text-sm leading-6 text-blue-900 md:text-base">
+            This story argues that salary differences are mainly the result of a combination of
+            <strong> cost of living </strong>
+            and
+            <strong> population density </strong>
+            effects. The later slides test that claim step by step, first by establishing a role
+            baseline and then by showing how geography changes the pattern.
+          </p>
+        </section>
+
+        <div className="grid h-full gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(260px,0.8fr)]">
         <section className="flex flex-col justify-center">
           <div className="max-w-3xl">
             <h2 className="text-2xl font-semibold text-gray-900 md:text-3xl">
@@ -45,12 +60,12 @@ export default function Home() {
             Slide Roadmap
           </div>
           <ol className="mt-4 space-y-3 text-sm leading-6 text-gray-700">
-            <li><strong>1. By Role</strong> – Baseline: which roles pay most?</li>
-            <li><strong>2. Location Context</strong> – How we categorize regions by density & COLA.</li>
-            <li><strong>3. By Location Type</strong> – Salary clusters reveal geographic premium.</li>
-            <li><strong>4. COLA Impact</strong> – Scatter plot: cost of living vs. average pay.</li>
-            <li><strong>5. Density Impact</strong> – Scatter plot: population density vs. pay.</li>
-            <li><strong>6. Sources</strong> – Data definitions and limitations.</li>
+            <li><strong>1. By Role</strong> – Establish the role baseline before testing the focus.</li>
+            <li><strong>2. Location Context</strong> – Define the COLA and density categories behind the focus.</li>
+            <li><strong>3. By Location Type</strong> – Show how average pay shifts once geography is introduced.</li>
+            <li><strong>4. COLA Impact</strong> – Test whether cost of living explains salary differences.</li>
+            <li><strong>5. Density Impact</strong> – Test whether population density adds explanatory power.</li>
+            <li><strong>6. Sources</strong> – Clarify the assumptions used to support the focus.</li>
           </ol>
           <Link
             href="/salary-role"
@@ -59,6 +74,7 @@ export default function Home() {
             Begin Analysis
           </Link>
         </aside>
+        </div>
       </div>
     </StoryShell>
   );

@@ -11,6 +11,19 @@ export default function LocationContextPage() {
     >
       <div className="flex h-full flex-col justify-center">
         <div className="space-y-8">
+          <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-800">
+              Focus
+            </div>
+            <p className="mt-2 text-sm leading-6 text-blue-900">
+              This slide defines the two mechanisms we want to test:
+              <strong> cost of living </strong>
+              and
+              <strong> population density</strong>.
+              It gives the categories needed to interpret the salary differences that appear in later slides.
+            </p>
+          </section>
+
           <section>
             <h2 className="mb-4 text-xl font-semibold text-gray-900">
               Why Density and COLA Matter for Data Practitioner Pay
@@ -25,6 +38,11 @@ export default function LocationContextPage() {
               Remote workers introduce a wildcard: they often command premium pay relative to their 
               home location (since they access national-tier labor markets), yet have no fixed geography 
               to reference for COLA or density.
+            </p>
+            <p className="mt-4 text-base leading-7 text-gray-700">
+              This slide gives the conceptual setup for the story focus: salary differences are expected
+              to come mainly from the combined effects of density and COLA, so we define those two forces
+              before comparing pay across location types.
             </p>
           </section>
 
@@ -90,7 +108,8 @@ export default function LocationContextPage() {
             <h2 className="mb-4 text-lg font-semibold text-gray-900">Next: Salary by Location Type</h2>
             <p className="text-sm text-gray-600">
               The next slide shows average salaries clustered by location category, revealing the geographic 
-              premium (high-COLA premium vs. real purchasing power for low-COLA regions).
+              premium (high-COLA premium vs. real purchasing power for low-COLA regions) and giving the first
+              direct look at the story focus in grouped salary averages.
             </p>
           </section>
         </div>

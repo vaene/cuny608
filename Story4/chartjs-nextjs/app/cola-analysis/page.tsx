@@ -5,11 +5,17 @@ import {
   ScatterController,
   BubbleController,
   Chart as ChartJS,
-  type ChartConfiguration,
+  type ChartConfigurationCustomTypesPerDataset,
+  type ChartDataset,
+  type BubbleDataPoint,
   LinearScale,
   PointElement,
   Tooltip,
-  Legend
+  Legend,
+  LineController,
+  LineElement,
+  type Point,
+  type TooltipItem
 } from "chart.js";
 
 import StoryShell from "@/components/StoryShell";
@@ -21,11 +27,20 @@ import {
   type SalaryByRegionEnrichedRecord
 } from "@/lib/salaryData";
 
-ChartJS.register(ScatterController, BubbleController, LinearScale, PointElement, Tooltip, Legend);
+ChartJS.register(
+  ScatterController,
+  BubbleController,
+  LineController,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  Legend
+);
 
 export default function ColaAnalysisPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const chartRef = useRef<ChartJS<"bubble"> | null>(null);
+  const chartRef = useRef<ChartJS | null>(null);
   const [status, setStatus] = useState("Loading data...");
 
   useEffect(() => {
@@ -53,14 +68,17 @@ export default function ColaAnalysisPage() {
 
         const colaMin = Math.min(...xs);
         const colaMax = Math.max(...xs);
+        const maxBubbleRadius = Math.max(...regions.map((region) => Math.sqrt(region.count) * 2));
+        const xPadding = Math.max(8, Math.ceil(maxBubbleRadius / 4));
         const trendlineData = [
-          { x: colaMin - 2, y: slope * (colaMin - 2) + intercept },
-          { x: colaMax + 2, y: slope * (colaMax + 2) + intercept }
+          { x: colaMin - xPadding, y: slope * (colaMin - xPadding) + intercept },
+          { x: colaMax + xPadding, y: slope * (colaMax + xPadding) + intercept }
         ];
 
-        const datasets = regions.map((region) => {
+        const bubbleDatasets: ChartDataset<"bubble", BubbleDataPoint[]>[] = regions.map((region) => {
           const color = getLocationTypeColor(region.locationName);
           return {
+            type: "bubble",
             label: region.region,
             data: [
               {
@@ -71,33 +89,40 @@ export default function ColaAnalysisPage() {
             ],
             backgroundColor: hexToRgba(color, 0.6),
             borderColor: color,
-            borderWidth: 2
+            borderWidth: 2,
+            clip: false
           };
         });
 
-        // Add trendline
-        datasets.push({
+        const trendlineDataset: ChartDataset<"line", Point[]> = {
           label: "Trend",
           data: trendlineData,
-          type: "line" as any,
+          type: "line",
           borderColor: "#9CA3AF",
           borderWidth: 2,
           borderDash: [5, 5],
           fill: false,
           pointRadius: 0,
           tension: 0
-        } as any);
+        };
 
-        const config: ChartConfiguration<"bubble"> = {
-          type: "bubble",
+        const config: ChartConfigurationCustomTypesPerDataset = {
           data: {
-            datasets
+            datasets: [...bubbleDatasets, trendlineDataset]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
               duration: 850
+            },
+            layout: {
+              padding: {
+                top: 36,
+                right: 40,
+                bottom: 36,
+                left: 28
+              }
             },
             plugins: {
               legend: {
@@ -111,8 +136,8 @@ export default function ColaAnalysisPage() {
                   title() {
                     return "";
                   },
-                  label(context: any) {
-                    const point = context.raw as any;
+                  label(context: TooltipItem<"bubble" | "line">) {
+                    const point = context.raw as BubbleDataPoint;
                     return `COLA: ${point.x} | Avg Salary: ${formatCurrency(point.y)}`;
                   }
                 }
@@ -125,10 +150,12 @@ export default function ColaAnalysisPage() {
                   display: true,
                   text: "Cost of Living Index (U.S. average = 100)"
                 },
-                min: 88,
-                max: 118,
+                min: Math.floor(colaMin - xPadding),
+                max: Math.ceil(colaMax + xPadding),
+                offset: true,
+                grace: "10%",
                 ticks: {
-                  callback(value: any) {
+                  callback(value: string | number) {
                     return String(value);
                   }
                 }
@@ -138,10 +165,12 @@ export default function ColaAnalysisPage() {
                   display: true,
                   text: "Average Salary ($)"
                 },
-                min: 90000,
-                max: 140000,
+                min: 75000,
+                max: 160000,
+                offset: true,
+                grace: 0,
                 ticks: {
-                  callback(value: any) {
+                  callback(value: string | number) {
                     return formatCurrency(Number(value));
                   }
                 }
@@ -154,7 +183,9 @@ export default function ColaAnalysisPage() {
           chartRef.current.destroy();
         }
 
-        chartRef.current = new ChartJS(canvasRef.current, config);
+        if (canvasRef.current) {
+          chartRef.current = new ChartJS(canvasRef.current, config);
+        }
         setStatus("");
       } catch (error) {
         console.error("Error rendering chart:", error);
@@ -179,13 +210,25 @@ export default function ColaAnalysisPage() {
       subtitle="Do higher cost-of-living regions command proportionally higher pay?"
     >
       <div className="flex h-full flex-col">
-        <div className="relative flex-1">
+        <section className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 p-6">
+          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-800">
+            Focus
+          </div>
+          <p className="mt-2 text-sm leading-6 text-blue-900">
+            This slide tests one half of the claim directly. If salary
+            differences are mainly driven by COLA and density, then this chart should show that
+            <strong> COLA alone explains a meaningful share </strong>
+            of the geographic salary pattern.
+          </p>
+        </section>
+
+        <div className="relative flex-none" style={{ height: "32rem" }}>
           {status && (
             <div className="flex items-center justify-center text-sm text-gray-500">
               {status}
             </div>
           )}
-          <canvas ref={canvasRef} />
+          <canvas ref={canvasRef} className="h-full w-full" />
         </div>
 
         <div className="mt-8 space-y-4 border-t border-gray-200 pt-6">
@@ -197,6 +240,10 @@ export default function ColaAnalysisPage() {
               <strong>Y-axis (Average Salary):</strong> Nominal annual compensation.
               <br />
               <strong>Bubble size:</strong> Represents sample size (larger = more workers).
+              <br />
+              <strong>Bubbles near the line:</strong> When a region sits close to the trend line, its salary is close
+              to what COLA alone would predict. That means COLA is a strong and fairly consistent explanation for
+              salary differences on this slide.
             </p>
           </div>
 
@@ -206,7 +253,8 @@ export default function ColaAnalysisPage() {
               Salaries <strong>do increase</strong> with COLA, but not proportionally. A 15-point COLA 
               increase (92→107, Midwest to Northeast) corresponds to roughly a +{formatCurrency(22500)} 
               salary increase. This is significant but incomplete—real purchasing power remains compressed 
-              in high-COLA regions due to housing and living cost premiums.
+              in high-COLA regions due to housing and living cost premiums. In the story focus, this slide
+              shows that COLA explains an important share of salary differences, but not the whole pattern by itself.
             </p>
           </div>
 

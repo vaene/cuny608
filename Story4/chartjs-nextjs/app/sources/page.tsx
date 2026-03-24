@@ -8,6 +8,15 @@ export default function SourcesPage() {
       subtitle="The story of location-driven salary variation demands clear assumptions."
     >
       <div className="space-y-6">
+        <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+          <h2 className="text-lg font-semibold text-blue-900">Focus</h2>
+          <p className="mt-2 text-sm leading-6 text-blue-900">
+            This slide shows the evidence base behind the focus. The sources and
+            methodology are included so the claim that salary differences are mainly tied to COLA and
+            population density can be evaluated transparently.
+          </p>
+        </section>
+
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
           <h2 className="text-lg font-semibold text-gray-900">Primary Data Source</h2>
           <p className="mt-3 text-sm leading-6 text-gray-700">
@@ -49,7 +58,7 @@ export default function SourcesPage() {
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Location Categories & "Remote"</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Location Categories & &quot;Remote&quot;</h2>
           <p className="mt-3 text-sm leading-6 text-gray-700">
             <strong>Remote work:</strong> Treated as its own category because remote workers negotiate with 
             national labor markets, not local COLA. This disconnects them from geographic anchors (density, COLA).
@@ -62,7 +71,7 @@ export default function SourcesPage() {
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
-          <h2 className="text-lg font-semibold text-gray-900">What We Don't Measure</h2>
+          <h2 className="text-lg font-semibold text-gray-900">What We Don&apos;t Measure</h2>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-gray-700">
             <li>• <strong>Real purchasing power:</strong> COLA provides a proxy, but individual costs vary (e.g., 
             some earn higher remote salaries while living in low-COLA areas).</li>
@@ -79,7 +88,9 @@ export default function SourcesPage() {
           <p className="mt-3 text-sm leading-6 text-gray-700">
             The notebook <code>data_practitioner_salary_analysis.ipynb</code> fetches BLS OEWS data via API, 
             aggregates by role and state, enriches with COLA and density metadata, and exports to JSON. 
-            The Next.js app then reads these static JSON files and renders interactive visualizations.
+            The Next.js app then reads these static JSON files and renders interactive visualizations. This
+            pipeline is designed to support the story focus by separating role effects from the geographic
+            effects of COLA and population density.
           </p>
         </section>
 
@@ -88,8 +99,8 @@ export default function SourcesPage() {
           <ul className="mt-3 space-y-2 text-sm leading-6 text-gray-700">
             <li>• COLA is a coarse proxy for living costs; housing costs dominate but vary drastically within 
             regions.</li>
-            <li>• Sample sizes vary by occupation and region (see "count" in JSON), affecting reliability.</li>
-            <li>• Remote salary classification is approximate; many "remote" roles may be hybrid or constrained 
+            <li>• Sample sizes vary by occupation and region (see &quot;count&quot; in JSON), affecting reliability.</li>
+            <li>• Remote salary classification is approximate; many &quot;remote&quot; roles may be hybrid or constrained 
             to certain regions.</li>
             <li>• Future work: compare salaries to career trajectory, retention, and actual cost-of-living burden 
             by location.</li>
