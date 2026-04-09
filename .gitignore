@@ -1,0 +1,61 @@
+# R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv_*/
+venv/
+
+# Node
+node_modules/
+.next/
+
+# Manim / generated media
+Story2/media/
+Story2/slides/
+
+# Archives and installers
+*.zip
+*.dmg
+*.tar
+*.gz
+*.7z
+
+# Office docs / presentations
+*.pdf
+*.pptx
+*.docx
+*.xlsx
+*.xls
+
+# Logs and outputs
+*.log
+*.tex
+*.html
+
+# Video / large binary data
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.nc
+*.shp
+*.shx
+*.dbf
+*.prj
+
+# Large data files (keep out of git)
+Story5/data/tornado_data.csv
+Story5/data/ibtrac_hurricane_data.csv
+app/public/data/ibtrac_hurricane_data.csv
+
+# Explicit venv name
+.venv_manim/

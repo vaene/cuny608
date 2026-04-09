@@ -1,7 +1,0 @@
-[1,"Installing 'httr2' ...\n"]
-[2,"trying URL 'https://cran.rstudio.com/bin/macosx/big-sur-arm64/contrib/4.5/httr2_1.2.2.tgz'\n"]
-[2,"Content type 'application/x-gzip' length 789306 bytes (770 KB)\n========="]
-[2,"=========================================\ndownloaded 770 KB\n\n"]
-[1,"The downloaded binary packages are in\n"]
-[1,"\t/var/folders/0q/g5msm3753hz2j_gz40d5f_640000gn/T//Rtmp6L1YP3/downloaded_packages\n"]
-[2,"\n\n✔ Package 'httr2' successfully installed.\n"]

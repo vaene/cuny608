@@ -1,0 +1,53 @@
+Story2 Slideshow - Slide Titles and PNG Chart Paths
+
+Slide 1
+Title: Can the Fed Control Inflation and Employment?
+Charts:
+- None
+
+Slide 2
+Title: Policy Theory - Interest vs Inflation
+Charts:
+- plots_svg/theory_slide_1_interest_vs_inflation.png
+
+Slide 3
+Title: Policy Theory - Interest vs Unemployment
+Charts:
+- plots_svg/theory_slide_2_interest_vs_unemployment.png
+
+Slide 4
+Title: Mandate Timeline
+Charts:
+- plots_svg/viz1_timeline_combined.png
+- plots_svg/viz1_stacked_26y.png
+
+Slide 5
+Title: Period Deep-Dive - Dot-com bust (2000-2003)
+Charts:
+- period_dotcom_ffr_vs_unemp.png
+- period_dotcom_ffr_vs_infl.png
+- plots_svg/period_dotcom_stacked_pct.png
+
+Slide 6
+Title: Period Deep-Dive - Financial crisis + aftermath (2008-2012)
+Charts:
+- period_gfc_ffr_vs_unemp.png
+- period_gfc_ffr_vs_infl.png
+- plots_svg/period_gfc_stacked_pct.png
+
+Slide 7
+Title: Period Deep-Dive - COVID era (2020-2023)
+Charts:
+- period_covid_ffr_vs_unemp.png
+- period_covid_ffr_vs_infl.png
+- plots_svg/period_covid_stacked_pct.png
+
+Slide 8
+Title: Tradeoff Map
+Charts:
+- plots_svg/viz2_tradeoff_scatter.png
+
+Slide 9
+Title: Takeaway
+Charts:
+- None

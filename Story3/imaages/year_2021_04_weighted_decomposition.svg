@@ -57,7 +57,7 @@
 <rect x='698.41' y='228.22' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #D55E00;' />
 <text x='720.46' y='222.03' style='font-size: 8.80px; font-family: "Arial";' textLength='41.02px' lengthAdjust='spacingAndGlyphs'>Strict (4-5)</text>
 <text x='720.46' y='239.31' style='font-size: 8.80px; font-family: "Arial";' textLength='60.58px' lengthAdjust='spacingAndGlyphs'>Less strict (1-3)</text>
-<text x='33.13' y='31.05' style='font-size: 11.00px; font-family: "Arial";' textLength='357.36px' lengthAdjust='spacingAndGlyphs'>Dashed line/label = mean of group means &lt;U+2022&gt; Source: FA_Deaths</text>
+<text x='33.13' y='31.05' style='font-size: 11.00px; font-family: "Arial";' textLength='309.50px' lengthAdjust='spacingAndGlyphs'>Dashed line/label = mean of group means • Source: FA_Deaths</text>
 <text x='33.13' y='14.93' style='font-size: 13.20px; font-family: "Arial";' textLength='185.86px' lengthAdjust='spacingAndGlyphs'>Weighted decomposition (2021)</text>
 </g>
 </g>
