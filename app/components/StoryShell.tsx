@@ -40,14 +40,14 @@ export default function StoryShell({
         {nextSlide ? (
           <Link
             href={nextSlide.href}
-            className="fixed right-4 top-1/2 z-20 -translate-y-1/2 text-base text-gray-400 transition duration-150 ease-out hover:scale-125 hover:text-gray-900 md:right-8"
+            className="fixed right-4 top-1/2 z-20 -translate-y-1/2 text-5xl leading-none text-gray-400 transition duration-150 ease-out hover:scale-110 hover:text-gray-900 md:right-8 md:text-6xl lg:text-7xl"
             aria-label={`Go to ${nextSlide.label}`}
           >
             <span className="inline-block">›</span>
           </Link>
         ) : (
           <div
-            className="fixed right-4 top-1/2 z-20 -translate-y-1/2 select-none text-base text-gray-400 opacity-25 md:right-8"
+            className="fixed right-4 top-1/2 z-20 -translate-y-1/2 select-none text-5xl leading-none text-gray-400 opacity-25 md:right-8 md:text-6xl lg:text-7xl"
             aria-hidden="true"
           >
             ›
@@ -57,14 +57,14 @@ export default function StoryShell({
         {prevSlide ? (
           <Link
             href={prevSlide.href}
-            className="fixed left-4 top-1/2 z-20 -translate-y-1/2 text-base text-gray-400 transition duration-150 ease-out hover:scale-125 hover:text-gray-900 md:left-8"
+            className="fixed left-4 top-1/2 z-20 -translate-y-1/2 text-5xl leading-none text-gray-400 transition duration-150 ease-out hover:scale-110 hover:text-gray-900 md:left-8 md:text-6xl lg:text-7xl"
             aria-label={`Go to ${prevSlide.label}`}
           >
             <span className="inline-block">‹</span>
           </Link>
         ) : (
           <div
-            className="fixed left-4 top-1/2 z-20 -translate-y-1/2 select-none text-base text-gray-400 opacity-25 md:left-8"
+            className="fixed left-4 top-1/2 z-20 -translate-y-1/2 select-none text-5xl leading-none text-gray-400 opacity-25 md:left-8 md:text-6xl lg:text-7xl"
             aria-hidden="true"
           >
             ‹
