@@ -13,13 +13,15 @@ interface SpiralEntry {
 }
 
 const START_YEAR = 1995;
-const END_YEAR = 2025;
+const END_YEAR = 2026;
 const CAMERA_Z = 8;
 const CAMERA_Z_COMPACT = 9;
+const CAMERA_Z_TILTED = 7.2;
+const CAMERA_Z_TILTED_COMPACT = 8.1;
 const LINE_WIDTH = 2.25;
-const BASE_RADIUS = 2.1;
+const BASE_RADIUS = 0;
 const TEMP_SCALE = 0.85;
-const SPIRAL_SCALE = 0.85; // 15% smaller overall
+const SPIRAL_SCALE = 0.72; // overall spiral scale
 const DEPTH_RANGE = 3.6;
 const MONTH_LABEL_FONT_COMPACT = 10;
 const MONTH_LABEL_FONT_FULL = 10;
@@ -27,9 +29,20 @@ const TEMP_LABEL_FONT_COMPACT = 10;
 const TEMP_LABEL_FONT_FULL = 10;
 
 const MONTH_LABELS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'] as const;
-const RING_VALUES = [0, 0.5, 1] as const;
+const RING_VALUES = [0, 1 / 3, 2 / 3, 1] as const;
 const RING_LABEL_FONT = 10;
 const ROTATION_YEAR_LABELS = [2025, 2015, 2005, 1995] as const;
+const ROTATION_SCALE_VALUES_KT = [78, 137, 195] as const;
+const ROTATION_SCALE_HEIGHT_COMPACT = 360;
+const ROTATION_SCALE_TOP_COMPACT = 48;
+const ROTATION_SCALE_HEIGHT_FULL = 470;
+const ROTATION_SCALE_TOP_FULL = 56;
+const ROTATION_SCALE_LEFT_COMPACT = 32;
+const ROTATION_SCALE_WIDTH_COMPACT = 64;
+const ROTATION_SCALE_LEFT_FULL = 56;
+const ROTATION_SCALE_WIDTH_FULL = 120;
+const ROTATION_SCALE_SMALL_SHIFT = 50;
+const ROTATION_SCALE_MID_SHIFT = 25;
 
 const monthToAngle = (month: number) => {
   const fraction = (month - 1) / 12;
@@ -88,9 +101,10 @@ const formatWindLabel = (value: number | null) => (value === null ? '—' : form
 
 interface HurricaneSpiralVisualProps {
   compact?: boolean;
+  autoPlayDelayMs?: number;
 }
 
-const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact = false }) => {
+const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact = false, autoPlayDelayMs = 0 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -105,6 +119,8 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
   const playingRef = useRef(false);
   const tiltProgressRef = useRef(0);
   const tiltHoldRef = useRef(0);
+  const spinAngleRef = useRef(0);
+  const viewModeRef = useRef<'tilted' | 'overhead'>('tilted');
 
   const [data, setData] = useState<SpiralEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,16 +130,20 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
   const [rendererSize, setRendererSize] = useState({ width: 0, height: 0 });
   const [dataError, setDataError] = useState<string | null>(null);
   const [rotationActive, setRotationActive] = useState(false);
+  const [viewMode, setViewMode] = useState<'tilted' | 'overhead'>('tilted');
+  const [canRotate, setCanRotate] = useState(false);
 
   const totalSegments = Math.max(0, data.length - 1);
   const valueStats = useMemo(() => {
     if (data.length === 0) return { min: null as number | null, mid: null as number | null, max: null as number | null };
     const values = data.map((entry) => entry.value).filter((value) => value > 0);
     if (values.length === 0) return { min: null as number | null, mid: null as number | null, max: null as number | null };
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const mid = (min + max) / 2;
-    return { min, mid, max };
+    const minRaw = Math.min(...values);
+    const maxRaw = Math.max(...values);
+    const minBound = minRaw - 10;
+    const maxBound = maxRaw + 10;
+    const mid = (minBound + maxBound) / 2;
+    return { min: minBound, mid, max: maxBound };
   }, [data]);
 
   const currentYear = useMemo(() => {
@@ -135,6 +155,15 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
   useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setPlaying(true), autoPlayDelayMs);
+    return () => window.clearTimeout(timeout);
+  }, [autoPlayDelayMs]);
+
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+  }, [viewMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -291,14 +320,16 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
     const positions = new Float32Array(data.length * 3);
     const colors = new Float32Array(data.length * 3);
     const values = data.map((entry) => entry.value).filter((value) => value > 0);
-    const minValue = values.length ? Math.min(...values) : 0;
-    const maxValue = values.length ? Math.max(...values) : 1;
+    const minRaw = values.length ? Math.min(...values) : 0;
+    const maxRaw = values.length ? Math.max(...values) : 1;
+    const minValue = minRaw - 10;
+    const maxValue = maxRaw + 10;
     const range = maxValue - minValue || 1;
 
     const yearSpan = Math.max(1, END_YEAR - START_YEAR);
     data.forEach((entry, idx) => {
       const normalized = Math.min(1, Math.max(0, (entry.value - minValue) / range));
-      const radius = (BASE_RADIUS + normalized * TEMP_SCALE * 2) * SPIRAL_SCALE;
+      const radius = normalized * TARGET_OUTER_RADIUS;
       const angle = monthToAngle(entry.month);
       const yearIndex = entry.year - START_YEAR;
       const z = (yearIndex / yearSpan) * DEPTH_RANGE - DEPTH_RANGE / 2;
@@ -372,7 +403,7 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
     };
 
     // Month labels
-    const monthRadius = (BASE_RADIUS + TEMP_SCALE * (compact ? 1.35 : 1.6)) * SPIRAL_SCALE;
+    const monthRadius = TARGET_OUTER_RADIUS * MONTH_RADIUS_RATIO * (compact ? 1 : 1);
     MONTH_LABELS.forEach((label, idx) => {
       const angle = monthToAngle(idx + 1);
       const sprite = makeLabelSprite(label, '#facc15', compact ? MONTH_LABEL_FONT_COMPACT : MONTH_LABEL_FONT_FULL);
@@ -386,16 +417,19 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
 
     // Ring labels
     const values = data.map((entry) => entry.value).filter((value) => value > 0);
-    const minValue = values.length ? Math.min(...values) : 0;
-    const maxValue = values.length ? Math.max(...values) : 0;
+    const minRaw = values.length ? Math.min(...values) : 0;
+    const maxRaw = values.length ? Math.max(...values) : 0;
+    const minValue = minRaw - 10;
+    const maxValue = maxRaw + 10;
     const midValue = values.length ? (minValue + maxValue) / 2 : 0;
     const ringLabels: Record<number, string> = {
       0: formatWind(minValue),
-      0.5: formatWind(midValue),
+      [1 / 3]: formatWind(minValue + (maxValue - minValue) / 3),
+      [2 / 3]: formatWind(minValue + ((maxValue - minValue) * 2) / 3),
       1: formatWind(maxValue),
     };
     RING_VALUES.forEach((value) => {
-      const radius = (BASE_RADIUS + value * TEMP_SCALE * 2) * SPIRAL_SCALE;
+      const radius = value * TARGET_OUTER_RADIUS;
       const label = ringLabels[value] ?? `${value}`;
       const color = value === 0.5 ? '#22c55e' : '#facc15';
       const sprite = makeLabelSprite(label, color, RING_LABEL_FONT);
@@ -430,7 +464,7 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
 
     const ringSegments = 256;
     RING_VALUES.forEach((value) => {
-      const radius = (BASE_RADIUS + value * TEMP_SCALE * 2) * SPIRAL_SCALE;
+      const radius = value * TARGET_OUTER_RADIUS;
       const points: THREE.Vector3[] = [];
       for (let i = 0; i <= ringSegments; i += 1) {
         const angle = (i / ringSegments) * Math.PI * 2;
@@ -470,19 +504,51 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
           }
         });
         if (progressRef.current >= 1) {
-          tiltHoldRef.current = Math.min(1000, tiltHoldRef.current + delta);
-          if (tiltHoldRef.current >= 1000) {
-            tiltProgressRef.current = Math.min(1, tiltProgressRef.current + delta / 2500);
+          const target = viewModeRef.current === 'overhead' ? 0 : 1;
+          const step = delta / 2500;
+          if (target === 1) {
+            tiltHoldRef.current = Math.min(1000, tiltHoldRef.current + delta);
+            if (tiltHoldRef.current >= 1000) {
+              tiltProgressRef.current = Math.min(1, tiltProgressRef.current + step);
+            }
+          } else {
+            tiltHoldRef.current = 0;
+            tiltProgressRef.current = Math.max(0, tiltProgressRef.current - step);
           }
-          spiralGroupRef.current.rotation.x = (-Math.PI / 2.3) * tiltProgressRef.current;
+
+          const baseTilt = (-Math.PI / 2.3) * tiltProgressRef.current;
+          spiralGroupRef.current.rotation.x = baseTilt;
+
+          if (tiltProgressRef.current >= 0.98 && viewModeRef.current === 'tilted') {
+            const spinSpeed = (Math.PI * 2) / 45000; // one rotation every ~45s
+            spinAngleRef.current = (spinAngleRef.current + delta * spinSpeed) % (Math.PI * 2);
+            spiralGroupRef.current.rotation.z = spinAngleRef.current;
+          } else {
+            spinAngleRef.current = 0;
+            spiralGroupRef.current.rotation.z = 0;
+          }
+
+          if (cameraRef.current) {
+            const targetZ = viewModeRef.current === 'tilted'
+              ? (compact ? CAMERA_Z_TILTED_COMPACT : CAMERA_Z_TILTED)
+              : (compact ? CAMERA_Z_COMPACT : CAMERA_Z);
+            cameraRef.current.position.z = targetZ;
+          }
         } else {
           tiltProgressRef.current = 0;
           tiltHoldRef.current = 0;
           spiralGroupRef.current.rotation.x = 0;
+          spiralGroupRef.current.rotation.z = 0;
+          spinAngleRef.current = 0;
+          if (cameraRef.current) {
+            cameraRef.current.position.z = compact ? CAMERA_Z_COMPACT : CAMERA_Z;
+          }
         }
       }
       const nextRotationActive = tiltProgressRef.current > 0.01;
       setRotationActive((prev) => (prev === nextRotationActive ? prev : nextRotationActive));
+      const nextCanRotate = progressRef.current >= 1;
+      setCanRotate((prev) => (prev === nextCanRotate ? prev : nextCanRotate));
       if (labelGroupRef.current) {
         const hideMonths = tiltProgressRef.current > 0;
         labelGroupRef.current.children.forEach((child) => {
@@ -514,6 +580,11 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
     progressRef.current = 0;
     setAnimationProgress(0);
     setPlaying(false);
+    setViewMode('tilted');
+  };
+
+  const handleRotateToggle = () => {
+    setViewMode((prev) => (prev === 'tilted' ? 'overhead' : 'tilted'));
   };
 
   if (loading) {
@@ -544,18 +615,43 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
         )}
         {showRotationLabels && (
           <div className="absolute inset-0 pointer-events-none z-20">
-            <div className="absolute left-14 top-8 text-[10px] text-amber-200">+1°C</div>
-            <div className="absolute left-22 top-8 text-[10px] text-amber-200">+0°C</div>
-
-            <div className="absolute left-16 top-12 h-[360px] w-px bg-amber-200/70" />
-            <div className="absolute left-24 top-12 h-[360px] w-px bg-amber-200/70" />
-
-
-            
-            <div className="absolute right-22 top-8 text-[10px] text-amber-200">+0°C</div>
-            <div className="absolute right-14 top-8 text-[10px] text-amber-200">+1°C</div>
-            <div className="absolute right-16 top-12 h-[360px] w-px bg-amber-200/70" />
-            <div className="absolute right-24 top-12 h-[360px] w-px bg-amber-200/70" />
+            {ROTATION_SCALE_VALUES_KT.map((value) => {
+              const min = valueStats.min ?? value;
+              const max = valueStats.max ?? value;
+              const range = max - min || 1;
+              const normalized = Math.min(1, Math.max(0, (value - min) / range));
+              const minValue = Math.min(...ROTATION_SCALE_VALUES_KT);
+              const maxValue = Math.max(...ROTATION_SCALE_VALUES_KT);
+              const isSmallest = value === minValue;
+              const isMiddle = value !== minValue && value !== maxValue;
+              const shift = isSmallest ? ROTATION_SCALE_SMALL_SHIFT : isMiddle ? ROTATION_SCALE_MID_SHIFT : 0;
+              const left = ROTATION_SCALE_LEFT_COMPACT + (1 - normalized) * ROTATION_SCALE_WIDTH_COMPACT + shift;
+              const topLabel = ROTATION_SCALE_TOP_COMPACT - 16;
+              return (
+                <React.Fragment key={value}>
+                  <div
+                    className="absolute top-12 h-[360px] w-px bg-amber-200/70"
+                    style={{ left: `${left}px` }}
+                  />
+                  <div
+                    className="absolute text-[10px] text-amber-200 whitespace-nowrap"
+                    style={{ left: `${left}px`, top: `${topLabel}px`, transform: 'translateX(-50%)' }}
+                  >
+                    {value} kt
+                  </div>
+                  <div
+                    className="absolute top-12 h-[360px] w-px bg-amber-200/70"
+                    style={{ right: `${left}px` }}
+                  />
+                  <div
+                    className="absolute text-[10px] text-amber-200 whitespace-nowrap"
+                    style={{ right: `${left}px`, top: `${topLabel}px`, transform: 'translateX(50%)' }}
+                  >
+                    {value} kt
+                  </div>
+                </React.Fragment>
+              );
+            })}
 
 
             <div className="absolute inset-0 flex flex-col items-center justify-start pt-24 gap-9 text-[12px] font-semibold text-lime-400">
@@ -566,12 +662,14 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
           </div>
         )}
         <div ref={containerRef} className="w-full h-[580px] relative z-10" />
-        <button
-          onClick={handlePlayToggle}
-          className="absolute left-2 top-2 z-20 rounded bg-blue-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-blue-700 transition"
-        >
-          {playing ? 'Pause' : 'Play'}
-        </button>
+        {canRotate && (
+          <button
+            onClick={handleRotateToggle}
+            className="absolute left-2 bottom-2 z-20 rounded bg-slate-700 px-2 py-1 text-[10px] font-semibold text-white hover:bg-slate-600 transition"
+          >
+            Rotate
+          </button>
+        )}
         {!rendererReady && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
             Initializing WebGL…
@@ -596,12 +694,6 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
     <div className="w-full">
       <div className="flex flex-col lg:flex-row gap-4 items-stretch">
         <div className="w-full lg:w-48 flex flex-col gap-3">
-          <button
-            onClick={handlePlayToggle}
-            className="px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
-          >
-            {playing ? 'Pause' : 'Play'}
-          </button>
           <button
             onClick={handleReset}
             className="px-4 py-2 rounded bg-slate-700 text-white text-sm font-semibold hover:bg-slate-600 transition"
@@ -634,18 +726,43 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
           )}
           {showRotationLabels && (
             <div className="absolute inset-0 pointer-events-none z-20">
-              <div className="absolute left-56 top-10 text-xs text-red-200">+2°F</div>
-              <div className="absolute left-40 top-10 text-xs text-red-200">+1°F</div>
-              <div className="absolute left-28 top-14 h-[470px] w-px bg-amber-200/70" />
-              <div className="absolute left-44 top-14 h-[470px] w-px bg-amber-200/70" />
-              <div className="absolute left-58 top-14 h-[470px] w-px bg-amber-200/70" />
-
-              <div className="absolute right-24 top-10 text-xs text-amber-200">0°</div>
-              <div className="absolute right-40 top-10 text-xs text-amber-200">+1°F</div>
-              <div className="absolute right-56 top-10 text-xs text-amber-200">+2°F</div>
-              <div className="absolute right-28 top-14 h-[470px] w-px bg-amber-200/70" />
-              <div className="absolute right-44 top-14 h-[470px] w-px bg-amber-200/70" />
-              <div className="absolute right-60 top-14 h-[470px] w-px bg-amber-200/70" />
+              {ROTATION_SCALE_VALUES_KT.map((value) => {
+                const min = valueStats.min ?? value;
+                const max = valueStats.max ?? value;
+                const range = max - min || 1;
+                const normalized = Math.min(1, Math.max(0, (value - min) / range));
+                const minValue = Math.min(...ROTATION_SCALE_VALUES_KT);
+                const maxValue = Math.max(...ROTATION_SCALE_VALUES_KT);
+                const isSmallest = value === minValue;
+                const isMiddle = value !== minValue && value !== maxValue;
+                const shift = isSmallest ? ROTATION_SCALE_SMALL_SHIFT : isMiddle ? ROTATION_SCALE_MID_SHIFT : 0;
+                const left = ROTATION_SCALE_LEFT_FULL + (1 - normalized) * ROTATION_SCALE_WIDTH_FULL + shift;
+                const topLabel = ROTATION_SCALE_TOP_FULL - 18;
+                return (
+                  <React.Fragment key={`full-${value}`}>
+                    <div
+                      className="absolute top-14 h-[470px] w-px bg-amber-200/70"
+                      style={{ left: `${left}px` }}
+                    />
+                    <div
+                      className="absolute text-xs text-amber-200 whitespace-nowrap"
+                      style={{ left: `${left}px`, top: `${topLabel}px`, transform: 'translateX(-50%)' }}
+                    >
+                      {value} kt
+                    </div>
+                    <div
+                      className="absolute top-14 h-[470px] w-px bg-amber-200/70"
+                      style={{ right: `${left}px` }}
+                    />
+                    <div
+                      className="absolute text-xs text-amber-200 whitespace-nowrap"
+                      style={{ right: `${left}px`, top: `${topLabel}px`, transform: 'translateX(50%)' }}
+                    >
+                      {value} kt
+                    </div>
+                  </React.Fragment>
+                );
+              })}
 
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 text-sm font-semibold text-lime-400">
                 {ROTATION_YEAR_LABELS.map((year) => (
@@ -655,6 +772,14 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
             </div>
           )}
           <div ref={containerRef} className="w-full h-[720px] relative z-10" />
+          {canRotate && (
+            <button
+              onClick={handleRotateToggle}
+              className="absolute left-2 bottom-2 z-20 rounded bg-slate-700 px-2 py-1 text-[10px] font-semibold text-white hover:bg-slate-600 transition"
+            >
+              Rotate
+            </button>
+          )}
           {!rendererReady && (
             <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
               Initializing WebGL…
@@ -697,3 +822,5 @@ const HurricaneSpiralVisual: React.FC<HurricaneSpiralVisualProps> = ({ compact =
 };
 
 export default HurricaneSpiralVisual;
+const TARGET_OUTER_RADIUS = (2.1 + TEMP_SCALE * 2) * SPIRAL_SCALE;
+const MONTH_RADIUS_RATIO = (2.1 + TEMP_SCALE * 1.35) / (2.1 + TEMP_SCALE * 2);

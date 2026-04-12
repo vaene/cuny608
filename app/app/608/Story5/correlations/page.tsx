@@ -4,73 +4,99 @@ import Story5Shell from "@/components/Story5Shell";
 import { KEY_FINDINGS } from "@/lib/climateData";
 
 export default function CorrelationsPage() {
+  const correlationCards = [
+    {
+      label: "Temp ↔ Tornado Count",
+      value: KEY_FINDINGS.temperatureTornadoCorrelation,
+      color: "from-emerald-400 to-green-500",
+      note: "Strongest relationship",
+    },
+    {
+      label: "Temp ↔ Tornado Deaths",
+      value: KEY_FINDINGS.temperatureTornadoDeathsCorrelation,
+      color: "from-amber-400 to-orange-500",
+      note: "Human impact signal",
+    },
+    {
+      label: "Temp ↔ Max Hurricane Wind",
+      value: KEY_FINDINGS.temperatureMaxHurricaneWindCorrelation,
+      color: "from-rose-400 to-red-500",
+      note: "Peak intensity link",
+    },
+    {
+      label: "Temp ↔ Avg Hurricane Wind",
+      value: KEY_FINDINGS.temperatureAvgHurricaneWindCorrelation,
+      color: "from-slate-400 to-slate-500",
+      note: "Near-zero average",
+    },
+  ];
+
   return (
     <Story5Shell
       currentPath="/608/Story5/correlations"
       title="Temperature-Storm Correlations"
       subtitle="Statistical relationships between rising temperatures and storm activity."
     >
-      <div className="space-y-4">
-        {/* Correlation Bars */}
-        <div className="space-y-3">
-          {/* Tornado Count */}
-          <div>
-            <div className="flex justify-between mb-1">
-              <span className="text-slate-300 text-xs font-semibold">Temp ↔ Tornado Count</span>
-              <span className="text-green-400 font-bold text-xs">{(KEY_FINDINGS.temperatureTornadoCorrelation).toFixed(3)}</span>
-            </div>
-            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full"
-                style={{ width: `${KEY_FINDINGS.temperatureTornadoCorrelation * 100}%` }}
-              />
-            </div>
-            <p className="text-slate-400 text-xs mt-1"><strong>Strong:</strong> As temperature rises, tornado frequency increases significantly.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-4">
+        {/* Correlation How-To */}
+        <div className="bg-slate-900/60 border border-slate-700 rounded-lg p-4">
+          <div className="text-slate-200 font-semibold text-sm mb-3">How Correlation Is Calculated</div>
+          <div className="bg-black/50 border border-slate-700 rounded-md p-3 text-slate-200 text-sm font-mono">
+            r = cov(X, Y) / (σₓ · σᵧ)
           </div>
-
-          {/* Tornado Deaths */}
-          <div>
-            <div className="flex justify-between mb-1">
-              <span className="text-slate-300 text-xs font-semibold">Temp ↔ Tornado Deaths</span>
-              <span className="text-yellow-400 font-bold text-xs">{(KEY_FINDINGS.temperatureTornadoDeathsCorrelation).toFixed(3)}</span>
-            </div>
-            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-yellow-500 to-orange-400 h-2 rounded-full"
-                style={{ width: `${KEY_FINDINGS.temperatureTornadoDeathsCorrelation * 100}%` }}
-              />
-            </div>
-            <p className="text-slate-400 text-xs mt-1"><strong>Moderate:</strong> More tornadoes mean more fatalities in warmer periods.</p>
+          <div className="mt-3 space-y-2 text-xs text-slate-300">
+            <div>1. Center each series: (xᵢ − x̄), (yᵢ − ȳ)</div>
+            <div>2. Multiply pairs and average → covariance</div>
+            <div>3. Divide by both standard deviations</div>
           </div>
-
-          {/* Hurricane Max Wind */}
-          <div>
-            <div className="flex justify-between mb-1">
-              <span className="text-slate-300 text-xs font-semibold">Temp ↔ Max Hurricane Wind</span>
-              <span className="text-red-400 font-bold text-xs">{(KEY_FINDINGS.temperatureMaxHurricaneWindCorrelation).toFixed(3)}</span>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] text-slate-400">
+            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1">
+              r = 1 → perfect positive
             </div>
-            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-red-500 to-pink-400 h-2 rounded-full"
-                style={{ width: `${KEY_FINDINGS.temperatureMaxHurricaneWindCorrelation * 100}%` }}
-              />
+            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1">
+              r = 0 → no linear link
             </div>
-            <p className="text-slate-400 text-xs mt-1"><strong>Moderate:</strong> Warmer oceans fuel stronger peak hurricane winds.</p>
+            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1">
+              r = −1 → perfect negative
+            </div>
+            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1">
+              |r| closer to 1 = stronger
+            </div>
           </div>
+        </div>
 
-          {/* Avg Hurricane Wind */}
-          <div>
-            <div className="flex justify-between mb-1">
-              <span className="text-slate-300 text-xs font-semibold">Temp ↔ Avg Hurricane Wind</span>
-              <span className="text-slate-400 font-bold text-xs">{(KEY_FINDINGS.temperatureAvgHurricaneWindCorrelation).toFixed(3)}</span>
-            </div>
-            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-slate-600 h-2 rounded-full"
-                style={{ width: `${Math.abs(KEY_FINDINGS.temperatureAvgHurricaneWindCorrelation) * 100}%` }}
-              />
-            </div>
-            <p className="text-slate-400 text-xs mt-1"><strong>Weak/Negligible:</strong> Average intensity varies; peak storms show stronger correlation.</p>
+        {/* Correlation Ladder */}
+        <div className="bg-slate-900/60 border border-slate-700 rounded-lg p-4">
+          <div className="text-slate-200 font-semibold text-sm mb-3">Correlation Ladder (0 = none, 1 = strong)</div>
+          <div className="relative h-72">
+            <div className="absolute left-3 top-4 bottom-6 w-px bg-slate-600/70" />
+            <div className="absolute left-0 top-1 text-[10px] text-slate-400">1.0</div>
+            <div className="absolute left-0 bottom-4 text-[10px] text-slate-500">0.0</div>
+
+            {correlationCards.map((item) => {
+              const value = Math.max(0, Math.min(1, item.value));
+              const bottom = 16 + value * 220;
+              const size = 10 + value * 12;
+              return (
+                <div
+                  key={item.label}
+                  className="absolute left-3 flex items-center gap-3"
+                  style={{ bottom: `${bottom}px` }}
+                >
+                  <div
+                    className={`rounded-full bg-gradient-to-r ${item.color} shadow-lg`}
+                    style={{ width: `${size}px`, height: `${size}px` }}
+                  />
+                  <div className="bg-slate-900/80 border border-slate-700 rounded-md px-2 py-1">
+                    <div className="text-slate-200 text-xs font-semibold">{item.label}</div>
+                    <div className="text-slate-400 text-[10px]">{item.note}</div>
+                  </div>
+                  <div className="text-slate-200 text-xs font-bold tabular-nums">
+                    {item.value.toFixed(3)}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

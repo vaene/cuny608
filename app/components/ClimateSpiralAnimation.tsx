@@ -13,7 +13,7 @@ interface TemperatureEntry {
 }
 
 const START_YEAR = 1995;
-const END_YEAR = 2025;
+const END_YEAR = 2026;
 const CAMERA_Z = 8;
 const CAMERA_Z_COMPACT = 9;
 const LINE_WIDTH = 2.25;
@@ -84,9 +84,10 @@ const lerpColor = (start: string, end: string, t: number) => {
 
 interface ClimateSpiralAnimationProps {
   compact?: boolean;
+  autoPlayDelayMs?: number;
 }
 
-const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact = false }) => {
+const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact = false, autoPlayDelayMs = 0 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -101,6 +102,8 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
   const playingRef = useRef(false);
   const tiltProgressRef = useRef(0);
   const tiltHoldRef = useRef(0);
+  const spinAngleRef = useRef(0);
+  const viewModeRef = useRef<'tilted' | 'overhead'>('tilted');
 
   const [data, setData] = useState<TemperatureEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,6 +113,8 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
   const [rendererSize, setRendererSize] = useState({ width: 0, height: 0 });
   const [dataError, setDataError] = useState<string | null>(null);
   const [rotationActive, setRotationActive] = useState(false);
+  const [viewMode, setViewMode] = useState<'tilted' | 'overhead'>('tilted');
+  const [canRotate, setCanRotate] = useState(false);
 
   const totalSegments = Math.max(0, data.length - 1);
 
@@ -122,6 +127,15 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
   useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setPlaying(true), autoPlayDelayMs);
+    return () => window.clearTimeout(timeout);
+  }, [autoPlayDelayMs]);
+
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+  }, [viewMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -443,19 +457,38 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
           }
         });
         if (progressRef.current >= 1) {
-          tiltHoldRef.current = Math.min(1000, tiltHoldRef.current + delta);
-          if (tiltHoldRef.current >= 1000) {
-            tiltProgressRef.current = Math.min(1, tiltProgressRef.current + delta / 2500);
+          const target = viewModeRef.current === 'overhead' ? 0 : 1;
+          const step = delta / 2500;
+          if (target === 1) {
+            tiltHoldRef.current = Math.min(1000, tiltHoldRef.current + delta);
+            if (tiltHoldRef.current >= 1000) {
+              tiltProgressRef.current = Math.min(1, tiltProgressRef.current + step);
+            }
+          } else {
+            tiltHoldRef.current = 0;
+            tiltProgressRef.current = Math.max(0, tiltProgressRef.current - step);
           }
           spiralGroupRef.current.rotation.x = (-Math.PI / 2.3) * tiltProgressRef.current;
+          if (tiltProgressRef.current >= 0.98 && viewModeRef.current === 'tilted') {
+            const spinSpeed = (Math.PI * 2) / 45000; // one rotation every ~45s
+            spinAngleRef.current = (spinAngleRef.current + delta * spinSpeed) % (Math.PI * 2);
+            spiralGroupRef.current.rotation.z = spinAngleRef.current;
+          } else {
+            spinAngleRef.current = 0;
+            spiralGroupRef.current.rotation.z = 0;
+          }
         } else {
           tiltProgressRef.current = 0;
           tiltHoldRef.current = 0;
           spiralGroupRef.current.rotation.x = 0;
+          spiralGroupRef.current.rotation.z = 0;
+          spinAngleRef.current = 0;
         }
       }
       const nextRotationActive = tiltProgressRef.current > 0.01;
       setRotationActive((prev) => (prev === nextRotationActive ? prev : nextRotationActive));
+      const nextCanRotate = progressRef.current >= 1;
+      setCanRotate((prev) => (prev === nextCanRotate ? prev : nextCanRotate));
       if (labelGroupRef.current) {
         const hideMonths = tiltProgressRef.current > 0;
         labelGroupRef.current.children.forEach((child) => {
@@ -487,6 +520,11 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
     progressRef.current = 0;
     setAnimationProgress(0);
     setPlaying(false);
+    setViewMode('tilted');
+  };
+
+  const handleRotateToggle = () => {
+    setViewMode((prev) => (prev === 'tilted' ? 'overhead' : 'tilted'));
   };
 
   if (loading) {
@@ -511,18 +549,18 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
         )}
         {showRotationLabels && (
           <div className="absolute inset-0 pointer-events-none z-20">
-            <div className="absolute left-14 top-8 text-[10px] text-amber-200">+1°C</div>
-            <div className="absolute left-22 top-8 text-[10px] text-amber-200">+0°C</div>
+            <div className="absolute left-2 top-8 text-[10px] text-amber-200">+1°C</div>
+            <div className="absolute left-[calc(1.5rem+65px)] top-8 text-[10px] text-amber-200">+0°C</div>
 
-            <div className="absolute left-16 top-12 h-[360px] w-px bg-amber-200/70" />
-            <div className="absolute left-24 top-12 h-[360px] w-px bg-amber-200/70" />
+            <div className="absolute left-[calc(1rem-5px)] top-12 h-[360px] w-px bg-amber-200/70" />
+            <div className="absolute left-[calc(2.5rem+50px)] top-12 h-[360px] w-px bg-amber-200/70" />
 
 
             
-            <div className="absolute right-22 top-8 text-[10px] text-amber-200">+0°C</div>
-            <div className="absolute right-14 top-8 text-[10px] text-amber-200">+1°C</div>
-            <div className="absolute right-16 top-12 h-[360px] w-px bg-amber-200/70" />
-            <div className="absolute right-24 top-12 h-[360px] w-px bg-amber-200/70" />
+            <div className="absolute right-[calc(1.5rem+65px)] top-8 text-[10px] text-amber-200">+0°C</div>
+            <div className="absolute right-2 top-8 text-[10px] text-amber-200">+1°C</div>
+            <div className="absolute right-[calc(1rem-5px)] top-12 h-[360px] w-px bg-amber-200/70" />
+            <div className="absolute right-[calc(2.5rem+50px)] top-12 h-[360px] w-px bg-amber-200/70" />
 
 
             <div className="absolute inset-0 flex flex-col items-center justify-start pt-24 gap-9 text-[12px] font-semibold text-lime-400">
@@ -533,12 +571,14 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
           </div>
         )}
         <div ref={containerRef} className="w-full h-[580px] relative z-10" />
-        <button
-          onClick={handlePlayToggle}
-          className="absolute left-2 top-2 z-20 rounded bg-blue-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-blue-700 transition"
-        >
-          {playing ? 'Pause' : 'Play'}
-        </button>
+        {canRotate && (
+          <button
+            onClick={handleRotateToggle}
+            className="absolute left-2 bottom-2 z-20 rounded bg-slate-700 px-2 py-1 text-[10px] font-semibold text-white hover:bg-slate-600 transition"
+          >
+            Rotate
+          </button>
+        )}
         {!rendererReady && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
             Initializing WebGL…
@@ -563,12 +603,6 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
     <div className="w-full">
       <div className="flex flex-col lg:flex-row gap-4 items-stretch">
         <div className="w-full lg:w-48 flex flex-col gap-3">
-          <button
-            onClick={handlePlayToggle}
-            className="px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
-          >
-            {playing ? 'Pause' : 'Play'}
-          </button>
           <button
             onClick={handleReset}
             className="px-4 py-2 rounded bg-slate-700 text-white text-sm font-semibold hover:bg-slate-600 transition"
@@ -596,13 +630,13 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
           {showRotationLabels && (
             <div className="absolute inset-0 pointer-events-none z-20">
               <div className="absolute left-56 top-10 text-xs text-red-200">+2°F</div>
-              <div className="absolute left-40 top-10 text-xs text-red-200">+1°F</div>
+              <div className="absolute left-8 top-10 text-xs text-red-200">+1°F</div>
               <div className="absolute left-28 top-14 h-[470px] w-px bg-amber-200/70" />
               <div className="absolute left-44 top-14 h-[470px] w-px bg-amber-200/70" />
               <div className="absolute left-58 top-14 h-[470px] w-px bg-amber-200/70" />
 
               <div className="absolute right-24 top-10 text-xs text-amber-200">0°</div>
-              <div className="absolute right-40 top-10 text-xs text-amber-200">+1°F</div>
+              <div className="absolute right-8 top-10 text-xs text-amber-200">+1°F</div>
               <div className="absolute right-56 top-10 text-xs text-amber-200">+2°F</div>
               <div className="absolute right-28 top-14 h-[470px] w-px bg-amber-200/70" />
               <div className="absolute right-44 top-14 h-[470px] w-px bg-amber-200/70" />
@@ -616,6 +650,14 @@ const ClimateSpiralAnimation: React.FC<ClimateSpiralAnimationProps> = ({ compact
             </div>
           )}
           <div ref={containerRef} className="w-full h-[720px] relative z-10" />
+          {canRotate && (
+            <button
+              onClick={handleRotateToggle}
+              className="absolute left-2 bottom-2 z-20 rounded bg-slate-700 px-2 py-1 text-[10px] font-semibold text-white hover:bg-slate-600 transition"
+            >
+              Rotate
+            </button>
+          )}
           {!rendererReady && (
             <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
               Initializing WebGL…

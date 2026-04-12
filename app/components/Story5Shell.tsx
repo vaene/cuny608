@@ -21,8 +21,8 @@ export default function Story5Shell({
   const nextSlide = currentIndex < STORY5_SLIDES.length - 1 ? STORY5_SLIDES[currentIndex + 1] : null;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4 md:p-8">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-6xl flex-col rounded-lg bg-slate-950 p-8 shadow-2xl md:min-h-[calc(100vh-4rem)] border border-slate-700">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4 md:p-4">
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-6xl flex-col rounded-lg bg-slate-950 p-4 shadow-2xl md:min-h-[calc(100vh-4rem)] border border-slate-700">
         <header className="mb-6 border-b border-slate-700 pb-5">
           <div className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Story 5: Climate & Storms
@@ -33,6 +33,9 @@ export default function Story5Shell({
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300 md:text-base">
             {subtitle}
           </p>
+          <div className="mt-2 text-xs text-slate-400">
+            Focus window: 1995–present (last 30 years)
+          </div>
         </header>
 
         <div className="flex-1">{children}</div>
