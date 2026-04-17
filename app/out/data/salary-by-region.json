@@ -1,0 +1,38 @@
+[
+  {
+    "region": "Northeast",
+    "mean": 128450.60,
+    "median": 125900,
+    "count": 312
+  },
+  {
+    "region": "West",
+    "mean": 135200.45,
+    "median": 132500,
+    "count": 289
+  },
+  {
+    "region": "Midwest",
+    "mean": 105300.75,
+    "median": 102300,
+    "count": 198
+  },
+  {
+    "region": "Southeast",
+    "mean": 98900.30,
+    "median": 96200,
+    "count": 276
+  },
+  {
+    "region": "Southwest",
+    "mean": 112600.85,
+    "median": 109800,
+    "count": 185
+  },
+  {
+    "region": "Remote",
+    "mean": 118500.20,
+    "median": 116000,
+    "count": 120
+  }
+]

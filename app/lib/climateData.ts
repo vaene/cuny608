@@ -2,7 +2,7 @@
 
 export const STORY5_SLIDES = [
   { href: "/608/Story5/opening", label: "Opening" },
-  { href: "/608/Story5", label: "Intro" },
+  { href: "/608/Story5/intro", label: "Intro" },
   { href: "/608/Story5/hurricane-spiral", label: "Spirals" },
   { href: "/608/Story5/trends", label: "Trends" },
   { href: "/608/Story5/correlations", label: "Correlations" },

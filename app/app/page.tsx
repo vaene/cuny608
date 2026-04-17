@@ -69,7 +69,7 @@ export default function Home() {
               </span>
             </div>
             <Link
-              href="/608/Story5"
+              href="/608/Story5/opening"
               className="mt-6 inline-flex items-center rounded-lg bg-slate-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-500"
             >
               Explore Story 5 →

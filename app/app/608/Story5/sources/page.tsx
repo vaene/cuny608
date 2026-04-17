@@ -286,6 +286,21 @@ export default function SourcesPage() {
           </div>
         </section>
 
+        {/* Downloads */}
+        <section className="bg-slate-900/50 border border-slate-600 rounded-lg p-6">
+          <h3 className="text-lg font-bold text-white mb-4">Project Files</h3>
+          <p className="text-slate-300 text-sm mb-4">
+            Download the full project bundle with all files needed to recreate the Story5 site locally, including data,
+            processing scripts, and a step-by-step README.
+          </p>
+          <a
+            href="/artifacts/Story5.zip"
+            className="inline-flex items-center rounded-md bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-600"
+          >
+            Download Story5 Project (ZIP)
+          </a>
+        </section>
+
         {/* Attribution */}
         <section className="bg-slate-900/50 border border-slate-600 rounded-lg p-6">
           <h3 className="text-lg font-bold text-white mb-4">Attribution & Acknowledgments</h3>

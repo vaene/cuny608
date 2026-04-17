@@ -38,6 +38,13 @@ export default function CorrelationsPage() {
       subtitle="Statistical relationships between rising temperatures and storm activity."
     >
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-4">
+        {/* Statistical Note */}
+        <div className="bg-slate-900/40 border border-slate-700/60 rounded-lg p-3">
+          <div className="text-slate-300 text-xs leading-relaxed">
+            <strong>Note:</strong> Pearson correlation means two variables tend to move together, but it does not prove one causes the other. A third factor can drive both (like warmer oceans and storm energy), the direction can be reversed, or it can be a coincidence. To show causation you usually need controlled experiments or strong evidence that rules out other explanations.
+          </div>
+        </div>
+
         {/* Correlation How-To */}
         <div className="bg-slate-900/60 border border-slate-700 rounded-lg p-4">
           <div className="text-slate-200 font-semibold text-sm mb-3">How Correlation Is Calculated</div>
@@ -104,10 +111,10 @@ export default function CorrelationsPage() {
         <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-600 rounded-lg p-4">
           <div className="text-slate-200 font-semibold text-sm mb-2">📈 What This Means</div>
           <ul className="space-y-1 text-xs text-slate-300">
-            <li>• <strong>Tornado link is strongest (0.852):</strong> Rising temps directly increase atmospheric instability, producing more tornadic storms</li>
-            <li>• <strong>Hurricane peak wind (0.515):</strong> Warmer sea surface temperatures add energy; "most intense" storms get stronger</li>
-            <li>• <strong>Deaths correlate with frequency:</strong> More storms = more exposure × more fatalities (multiplicative effect)</li>
-            <li>• <strong>Causation:</strong> Temperature doesn't directly cause storms, but affects atmospheric/oceanic conditions that do</li>
+            <li>• <strong>Tornado link is strongest (0.852):</strong> Years with higher temps tend to line up with more tornadoes, but the chart alone does not prove cause</li>
+            <li>• <strong>Hurricane peak wind (0.515):</strong> Warmer oceans are associated with stronger peak winds, but other factors also matter</li>
+            <li>• <strong>Deaths correlate with frequency:</strong> More storms can mean more exposure, which can raise fatalities</li>
+            <li>• <strong>Big idea:</strong> Correlation shows a pattern, not a direct cause-and-effect rule</li>
           </ul>
         </div>
 
@@ -123,12 +130,6 @@ export default function CorrelationsPage() {
           </div>
         </div>
 
-        {/* StatisticalNote */}
-        <div className="bg-slate-900/40 border border-slate-700/60 rounded-lg p-3">
-          <div className="text-slate-300 text-xs leading-relaxed">
-            <strong>Note:</strong> Pearson correlation does not imply causation. These correlations show association, not direct cause-and-effect. Multiple factors influence storm formation (atmospheric pressure, wind shear, ocean currents). Temperature is one significant variable among many.
-          </div>
-        </div>
       </div>
     </Story5Shell>
   );

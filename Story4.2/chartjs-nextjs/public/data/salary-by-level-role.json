@@ -1,0 +1,23 @@
+{
+  "Junior": {
+    "Data Scientist": 89500.00,
+    "Data Engineer": 82300.00,
+    "Data Architect": 85000.00,
+    "Business Analyst": 58900.00,
+    "Data Analyst": 52400.00
+  },
+  "Mid-Level": {
+    "Data Scientist": 125000.00,
+    "Data Engineer": 118000.00,
+    "Data Architect": 128500.00,
+    "Business Analyst": 89000.00,
+    "Data Analyst": 78500.00
+  },
+  "Senior": {
+    "Data Scientist": 165200.00,
+    "Data Engineer": 158700.00,
+    "Data Architect": 182300.00,
+    "Business Analyst": 125000.00,
+    "Data Analyst": 110500.00
+  }
+}

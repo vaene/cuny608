@@ -1,0 +1,68 @@
+[
+  {
+    "region": "Northeast",
+    "locationName": "Urban High-COLA",
+    "mean": 128450.60,
+    "median": 125900,
+    "count": 312,
+    "popDensity": 815,
+    "popDensityCategory": "Very High (>500/sq mi)",
+    "cola": 114,
+    "colaCategory": "High COLA"
+  },
+  {
+    "region": "West",
+    "locationName": "Urban High-COLA",
+    "mean": 135200.45,
+    "median": 132500,
+    "count": 289,
+    "popDensity": 287,
+    "popDensityCategory": "High (200-500/sq mi)",
+    "cola": 115,
+    "colaCategory": "Very High COLA"
+  },
+  {
+    "region": "Southwest",
+    "locationName": "Suburban Medium-COLA",
+    "mean": 112600.85,
+    "median": 109800,
+    "count": 185,
+    "popDensity": 45,
+    "popDensityCategory": "Low (20-100/sq mi)",
+    "cola": 100,
+    "colaCategory": "Moderate COLA"
+  },
+  {
+    "region": "Southeast",
+    "locationName": "Distributed Low-COLA",
+    "mean": 98900.30,
+    "median": 96200,
+    "count": 276,
+    "popDensity": 60,
+    "popDensityCategory": "Low-Medium (20-150/sq mi)",
+    "cola": 93,
+    "colaCategory": "Below-Average COLA"
+  },
+  {
+    "region": "Midwest",
+    "locationName": "Rural Low-COLA",
+    "mean": 105300.75,
+    "median": 102300,
+    "count": 198,
+    "popDensity": 102,
+    "popDensityCategory": "Low-Medium (20-150/sq mi)",
+    "cola": 92,
+    "colaCategory": "Below-Average COLA"
+  },
+  {
+    "region": "Remote",
+    "locationName": "Remote (No Geography)",
+    "mean": 118500.20,
+    "median": 116000,
+    "count": 120,
+    "popDensity": null,
+    "popDensityCategory": "Remote - No geography",
+    "cola": null,
+    "colaCategory": "Remote - No geography"
+  }
+]
