@@ -1,0 +1,61 @@
+[
+  {
+    "region": "Remote",
+    "type": "Remote",
+    "popDensity": null,
+    "popDensityCategory": "Remote - No geography",
+    "cola": null,
+    "colaCategory": "Remote - No geography",
+    "description": "Work-from-home positions. No geographic cost factors apply."
+  },
+  {
+    "region": "East Coast: High Density, High COLA",
+    "type": "Urban High-COLA",
+    "included": ["Northeast"],
+    "popDensity": 815,
+    "popDensityCategory": "Very High (>500/sq mi)",
+    "cola": 114,
+    "colaCategory": "High COLA (110+)",
+    "description": "Northeast: Dense urban centers (Boston, NYC, Philadelphia), highest cost of living."
+  },
+  {
+    "region": "West Coast: High Density, High COLA",
+    "type": "Urban High-COLA",
+    "included": ["West Coast subset"],
+    "popDensity": 287,
+    "popDensityCategory": "High (200-500/sq mi)",
+    "cola": 115,
+    "colaCategory": "Very High COLA (115+)",
+    "description": "California, Washington: Tech hubs with premium costs, high density."
+  },
+  {
+    "region": "Mountain: Medium Density, Medium COLA",
+    "type": "Suburban Medium-COLA",
+    "included": ["Southwest", "West Mountain states"],
+    "popDensity": 45,
+    "popDensityCategory": "Low (20-100/sq mi)",
+    "cola": 100,
+    "colaCategory": "Moderate COLA (100-106)",
+    "description": "Southwest & Mountain states: Growing tech presence, moderate costs."
+  },
+  {
+    "region": "South Central: Lower Density, Lower COLA",
+    "type": "Distributed Low-COLA",
+    "included": ["Southeast", "Southwest"],
+    "popDensity": 60,
+    "popDensityCategory": "Low-Medium (20-150/sq mi)",
+    "cola": 93,
+    "colaCategory": "Below-Average COLA (<100)",
+    "description": "Southeast & Southwest: Lower costs, distributed population, rising markets."
+  },
+  {
+    "region": "Midwest: Low Density, Low COLA",
+    "type": "Rural Low-COLA",
+    "included": ["Midwest"],
+    "popDensity": 102,
+    "popDensityCategory": "Low-Medium (20-150/sq mi)",
+    "cola": 92,
+    "colaCategory": "Below-Average COLA (<100)",
+    "description": "Midwest: Lowest cost of living, lower density, emerging data hubs."
+  }
+]

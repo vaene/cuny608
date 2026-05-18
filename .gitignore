@@ -56,6 +56,8 @@ Story2/slides/
 Story5/data/tornado_data.csv
 Story5/data/ibtrac_hurricane_data.csv
 app/public/data/ibtrac_hurricane_data.csv
+app/out/
+Story5_artifacts_build/
 
 # Explicit venv name
 .venv_manim/

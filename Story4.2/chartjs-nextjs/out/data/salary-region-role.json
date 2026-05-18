@@ -1,0 +1,44 @@
+{
+  "Northeast": {
+    "Data Scientist": 132500.00,
+    "Data Engineer": 125300.00,
+    "Data Architect": 138200.00,
+    "Business Analyst": 95600.00,
+    "Data Analyst": 82400.00
+  },
+  "West": {
+    "Data Scientist": 142300.00,
+    "Data Engineer": 135800.00,
+    "Data Architect": 148900.00,
+    "Business Analyst": 102300.00,
+    "Data Analyst": 88500.00
+  },
+  "Midwest": {
+    "Data Scientist": 108900.00,
+    "Data Engineer": 101500.00,
+    "Data Architect": 115200.00,
+    "Business Analyst": 78500.00,
+    "Data Analyst": 65300.00
+  },
+  "Southeast": {
+    "Data Scientist": 102100.00,
+    "Data Engineer": 95400.00,
+    "Data Architect": 108700.00,
+    "Business Analyst": 72900.00,
+    "Data Analyst": 61200.00
+  },
+  "Southwest": {
+    "Data Scientist": 118400.00,
+    "Data Engineer": 110900.00,
+    "Data Architect": 124500.00,
+    "Business Analyst": 86200.00,
+    "Data Analyst": 72800.00
+  },
+  "Remote": {
+    "Data Scientist": 125800.00,
+    "Data Engineer": 118200.00,
+    "Data Architect": 130600.00,
+    "Business Analyst": 92500.00,
+    "Data Analyst": 79400.00
+  }
+}

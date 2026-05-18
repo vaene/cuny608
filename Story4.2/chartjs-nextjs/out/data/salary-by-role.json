@@ -1,0 +1,32 @@
+[
+  {
+    "role": "Data Scientist",
+    "mean": 125450.75,
+    "median": 123000,
+    "count": 250
+  },
+  {
+    "role": "Data Engineer",
+    "mean": 118200.30,
+    "median": 116500,
+    "count": 245
+  },
+  {
+    "role": "Data Architect",
+    "mean": 132800.50,
+    "median": 130000,
+    "count": 165
+  },
+  {
+    "role": "Business Analyst",
+    "mean": 89450.20,
+    "median": 87000,
+    "count": 220
+  },
+  {
+    "role": "Data Analyst",
+    "mean": 78900.85,
+    "median": 76500,
+    "count": 280
+  }
+]

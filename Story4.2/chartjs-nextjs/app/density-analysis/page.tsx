@@ -253,10 +253,10 @@ function RelationHeader({ relation }: { relation: RegionSummary["relation"] }) {
 
   return (
     <div className="col-span-full flex items-center gap-3 py-1">
-      <div className="whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.16em] text-gray-500">
+      <div className="whitespace-nowrap text-[12px] font-medium uppercase tracking-[0.16em] text-gray-500">
         {label}
       </div>
-      <div className="h-px flex-1 bg-gray-200/55" />
+      <div className="h-px flex-1 bg-gray-300/70" />
     </div>
   );
 }

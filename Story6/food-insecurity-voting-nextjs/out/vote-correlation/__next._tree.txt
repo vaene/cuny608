@@ -1,0 +1,2 @@
+:HL["/Story6/_next/static/css/736eaec5e5d6d8f5.css","style"]
+0:{"buildId":"RydIvewuFk7sM9oFlXPFn","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"vote-correlation","paramType":null,"paramKey":"vote-correlation","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}

@@ -5,6 +5,10 @@ import salaryByRegion from "@/public/data/salary-by-region.json";
 import salaryByRole from "@/public/data/salary-by-role.json";
 import salaryRegionRole from "@/public/data/salary-region-role.json";
 
+type SalaryRegionRole = typeof salaryRegionRole;
+type RegionName = keyof SalaryRegionRole;
+type RoleName = keyof SalaryRegionRole[RegionName];
+
 function formatDelta(value: number): string {
   const rounded = Math.round(value);
   return `${rounded >= 0 ? "+" : "-"}${formatCurrency(Math.abs(rounded))}`;
@@ -26,7 +30,8 @@ export default function SourcesPage() {
   const bottomRegion = sortedRegions[sortedRegions.length - 1];
   const regionGap = topRegion.mean - bottomRegion.mean;
 
-  const roleNames = Object.keys(salaryRegionRole[Object.keys(salaryRegionRole)[0]]);
+  const regionNames = Object.keys(salaryRegionRole) as RegionName[];
+  const roleNames = Object.keys(salaryRegionRole[regionNames[0]]) as RoleName[];
   const regionRoleSpreads = roleNames.map((role) => {
     const sortedEntries = Object.entries(salaryRegionRole)
       .map(([region, roleMap]) => [region, roleMap[role]] as const)

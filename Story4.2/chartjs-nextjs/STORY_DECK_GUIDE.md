@@ -182,6 +182,12 @@ chartjs-nextjs/app/
 - Tailwind CSS for responsive design
 - Chart.js for data visualizations (bar charts, scatter plots)
 
+### Reusable Slide Format
+- Prefer `components/SlideDeckShell.tsx` for any new slide deck
+- Keep every slide inside a strict `16:9` frame
+- Avoid body-level vertical scrolling; if a slide grows too tall, simplify the content instead
+- Use `docs/slide-style-guide.md` and `docs/slide-template.md` as the starting point for future projects
+
 ### Data Loading
 - All data is static JSON served from `public/data/`
 - `loadJSON()` helper in `lib/salaryData.ts` fetches at component mount

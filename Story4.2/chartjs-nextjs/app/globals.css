@@ -19,3 +19,33 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.slide-frame {
+  aspect-ratio: 16 / 9;
+}
+
+.slide-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  translate: 0 -50%;
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  line-height: 1;
+  transition: transform 150ms ease-out, color 150ms ease-out;
+  user-select: none;
+}
+
+.slide-nav:hover {
+  transform: scale(1.08);
+}
+
+.slide-nav-left {
+  left: clamp(0.5rem, 2vw, 1.5rem);
+}
+
+.slide-nav-right {
+  right: clamp(0.5rem, 2vw, 1.5rem);
+}
