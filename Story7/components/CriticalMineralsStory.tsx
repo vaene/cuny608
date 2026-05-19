@@ -131,8 +131,8 @@ const STORY_VOICE_HINTS = [
 ];
 const FLAG_IMAGE_URLS: Record<string, string> = {
   US: "/608/Story7/flags/us.png",
-  FR: "/608/Story7/flags/fr.svg",
-  NO: "/608/Story7/flags/no.svg",
+  FR: "/608/Story7/flags/fr.png",
+  NO: "/608/Story7/flags/no.png",
   CN: "/608/Story7/flags/cn.png",
   CL: "/608/Story7/flags/cl.png",
   AR: "/608/Story7/flags/ar.png",
@@ -166,7 +166,18 @@ function flagImageUrl(code: string) {
 }
 
 function getPolygonFlagKey(feature: CountryFeature) {
-  return feature.properties.ISO_A2;
+  if (feature.properties.ISO_A2 !== "-99") {
+    return feature.properties.ISO_A2;
+  }
+
+  switch (feature.properties.ADMIN) {
+    case "France":
+      return "FR";
+    case "Norway":
+      return "NO";
+    default:
+      return feature.properties.ISO_A2;
+  }
 }
 
 function selectBritishVoice(voices: SpeechSynthesisVoice[]) {
