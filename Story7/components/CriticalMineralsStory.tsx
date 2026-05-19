@@ -45,7 +45,15 @@ type StoryGraphic =
       title: string;
       subtitle: string;
       metrics: StoryMetric[];
-    };
+    }
+  | {
+      kind: "sources";
+      title: string;
+      subtitle: string;
+      methods: string[];
+      sources: { label: string; href: string }[];
+      zipHref: string;
+  };
 
 type StoryStep = {
   title: string;
@@ -55,6 +63,11 @@ type StoryStep = {
   lines: string[];
   graphic: StoryGraphic;
   accent: string;
+};
+
+type StoryTextBlock = {
+  kind: "title" | "label" | "description" | "body";
+  text: string;
 };
 
 type GlobeHandle = {
@@ -89,8 +102,8 @@ const BACKGROUND_TEXTURE = "https://cdn.jsdelivr.net/npm/three-globe@2.32/exampl
 const STORY_TRANSITION_MS = 1450;
 const IDLE_ROTATE_DELAY_MS = 4200;
 const AUTO_ROTATE_SPEED = 0.28;
-const WORD_DELAY_MS = 72;
 const LINE_DELAY_MS = 260;
+const PRESENTATION_ZIP_HREF = "/Story7/artifacts/story7-presentation-source.zip";
 
 const STORY_STEPS: StoryStep[] = [
   {
@@ -239,6 +252,35 @@ const STORY_STEPS: StoryStep[] = [
       ]
     },
     accent: "#67e8f9"
+  },
+  {
+    title: "Methods & Sources",
+    label: "Source pack",
+    description:
+      "This slide captures the method in plain language and points to the source files and archive used to build the presentation.",
+    pov: { lat: 22, lng: 5, altitude: 2.25 },
+    lines: [
+      "Method: this presentation combines narrative copy with synchronized charts to turn each geography into a single visual argument.",
+      "Sources: country geometry, public population estimates, and the project data files stored with the presentation source bundle.",
+      "Use the archive to recreate the deck structure, data inputs, and export settings."
+    ],
+    graphic: {
+      kind: "sources",
+      title: "Methods and sources",
+      subtitle: "Methods and source links for the deck.",
+      methods: [
+        "Narrative timing is driven by a character-by-character terminal typewriter.",
+        "The globe view advances one section at a time and stays fixed on the closing slides.",
+        "Charts are synchronized to the typed copy so the visual builds with the story."
+      ],
+      sources: [
+        { label: "GeoJSON countries", href: "/Story7/datasets/ne_110m_admin_0_countries.geojson" },
+        { label: "App source", href: "/Story7/" },
+        { label: "Presentation zip", href: PRESENTATION_ZIP_HREF }
+      ],
+      zipHref: PRESENTATION_ZIP_HREF
+    },
+    accent: "#a78bfa"
   }
 ];
 
@@ -276,42 +318,63 @@ function useReducedMotion() {
   return reducedMotion;
 }
 
-function splitWords(line: string) {
-  return line.trim().length ? line.trim().split(/\s+/) : [];
+function getCharDelay(current: string, next: string | undefined) {
+  if (current === " ") {
+    return 18;
+  }
+
+  if (",;:".includes(current)) {
+    return 58;
+  }
+
+  if (".!?".includes(current)) {
+    return 110;
+  }
+
+  if (current === "-") {
+    return 30;
+  }
+
+  if (next === " ") {
+    return 34;
+  }
+
+  return 24;
 }
 
-function useTypewriter(lines: string[], stepKey: string, reducedMotion: boolean) {
-  const [lineIndex, setLineIndex] = useState(0);
-  const [wordIndex, setWordIndex] = useState(0);
+function useTypewriter(blocks: StoryTextBlock[], stepKey: string, reducedMotion: boolean) {
+  const [blockIndex, setBlockIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setLineIndex(0);
-      setWordIndex(0);
+      setBlockIndex(0);
+      setCharIndex(0);
     }, 0);
 
     return () => window.clearTimeout(timer);
   }, [stepKey]);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || blocks.length === 0) return;
 
-    if (lineIndex >= lines.length) {
+    if (blockIndex >= blocks.length) {
       return;
     }
 
-    const words = splitWords(lines[lineIndex] ?? "");
+    const text = blocks[blockIndex]?.text ?? "";
     let timer: number | undefined;
 
-    if (wordIndex < words.length) {
-      const nextDelay = WORD_DELAY_MS + Math.min(60, (words[wordIndex]?.length ?? 0) * 8);
+    if (charIndex < text.length) {
+      const current = text[charIndex] ?? "";
+      const next = text[charIndex + 1];
       timer = window.setTimeout(() => {
-        setWordIndex((value) => value + 1);
-      }, nextDelay);
-    } else {
+        setCharIndex((value) => value + 1);
+      }, getCharDelay(current, next));
+    } else if (blockIndex < blocks.length - 1) {
       timer = window.setTimeout(() => {
-        setLineIndex((value) => value + 1);
-        setWordIndex(0);
+        setBlockIndex((value) => value + 1);
+        setCharIndex(0);
       }, LINE_DELAY_MS);
     }
 
@@ -320,52 +383,53 @@ function useTypewriter(lines: string[], stepKey: string, reducedMotion: boolean)
         window.clearTimeout(timer);
       }
     };
-  }, [lineIndex, lines, reducedMotion, wordIndex]);
+  }, [blockIndex, blocks, charIndex, reducedMotion]);
 
   const renderedLines = useMemo(() => {
     if (reducedMotion) {
-      return lines.slice();
+      return blocks.map((block) => block.text);
     }
 
-    return lines.map((line, index) => {
-      if (index < lineIndex) {
-        return line;
+    return blocks.map((block, index) => {
+      if (index < blockIndex) {
+        return block.text;
       }
 
-      if (index > lineIndex) {
+      if (index > blockIndex) {
         return "";
       }
 
-      const words = splitWords(line);
-      return words.slice(0, wordIndex).join(" ");
+      return block.text.slice(0, charIndex);
     });
-  }, [lineIndex, lines, reducedMotion, wordIndex]);
+  }, [blockIndex, blocks, charIndex, reducedMotion]);
 
   const progress = useMemo(() => {
-    const totalWords = lines.reduce((sum, line) => sum + splitWords(line).length, 0);
+    const totalChars = blocks.reduce((sum, block) => sum + block.text.length, 0);
 
-    if (reducedMotion || totalWords === 0) {
+    if (reducedMotion || totalChars === 0) {
       return 1;
     }
 
-    let wordsTyped = 0;
+    let charsTyped = 0;
 
-    for (let index = 0; index < Math.min(lineIndex, lines.length); index += 1) {
-      wordsTyped += splitWords(lines[index]).length;
+    for (let index = 0; index < Math.min(blockIndex, blocks.length); index += 1) {
+      charsTyped += blocks[index].text.length;
     }
 
-    if (lineIndex < lines.length) {
-      wordsTyped += Math.min(wordIndex, splitWords(lines[lineIndex] ?? "").length);
+    if (blockIndex < blocks.length) {
+      charsTyped += Math.min(charIndex, blocks[blockIndex]?.text.length ?? 0);
     } else {
-      wordsTyped = totalWords;
+      charsTyped = totalChars;
     }
 
-    return clamp(wordsTyped / totalWords);
-  }, [lineIndex, lines, reducedMotion, wordIndex]);
+    return clamp(charsTyped / totalChars);
+  }, [blockIndex, blocks, charIndex, reducedMotion]);
 
-  const cursorLineIndex = reducedMotion ? Math.max(0, lines.length - 1) : clamp(lineIndex, 0, Math.max(0, lines.length - 1));
+  const cursorBlockIndex = reducedMotion
+    ? Math.max(0, blocks.length - 1)
+    : Math.min(blockIndex, Math.max(0, blocks.length - 1));
 
-  return { renderedLines, progress, cursorLineIndex };
+  return { renderedLines, progress, cursorBlockIndex };
 }
 
 function ChartBars({
@@ -385,11 +449,17 @@ function ChartBars({
         const reveal = clamp(progress * metrics.length - index * 0.34);
         const eased = easeOutCubic(reveal);
         const percent = Math.round(metric.value);
+        const barWidth = orientation === "vertical" ? `${12 + (metric.value / maxValue) * 10}px` : undefined;
 
         return (
           <div key={metric.label} className={`support-bar support-bar-${orientation}`}>
-            <div className="support-bar-label">{metric.label}</div>
-            <div className={`support-bar-track support-bar-track-${orientation}`}>
+            <div className="support-bar-label" style={{ color: metric.color }}>
+              {metric.label}
+            </div>
+            <div
+              className={`support-bar-track support-bar-track-${orientation}`}
+              style={barWidth ? { width: barWidth } : undefined}
+            >
               <div
                 className="support-bar-fill"
                 style={
@@ -405,7 +475,9 @@ function ChartBars({
                 }
               />
             </div>
-            <div className="support-bar-value">{percent}%</div>
+            <div className="support-bar-value" style={{ color: metric.color }}>
+              {percent}%
+            </div>
           </div>
         );
       })}
@@ -488,14 +560,15 @@ function ChartRings({ metrics, progress }: { metrics: StoryMetric[]; progress: n
 }
 
 function ChartLine({ metrics, progress }: { metrics: StoryMetric[]; progress: number }) {
-  const width = 640;
-  const height = 260;
-  const margin = 26;
+  const width = 680;
+  const height = 310;
+  const margin = 34;
+  const labelPadding = 24;
   const maxValue = Math.max(1, ...metrics.map((metric) => metric.value));
   const step = metrics.length > 1 ? (width - margin * 2) / (metrics.length - 1) : 0;
   const points = metrics.map((metric, index) => {
     const x = margin + index * step;
-    const y = height - margin - (metric.value / maxValue) * (height - margin * 2);
+    const y = height - margin - 12 - (metric.value / maxValue) * (height - margin * 2 - 18);
     return { x, y, metric };
   });
 
@@ -513,7 +586,7 @@ function ChartLine({ metrics, progress }: { metrics: StoryMetric[]; progress: nu
             <stop offset="100%" stopColor="#fb7185" stopOpacity="0.75" />
           </linearGradient>
         </defs>
-        <line x1={margin} y1={height - margin} x2={width - margin} y2={height - margin} className="support-grid-line" />
+        <line x1={margin} y1={height - margin - 12} x2={width - margin} y2={height - margin - 12} className="support-grid-line" />
         <line x1={margin} y1={margin} x2={margin} y2={height - margin} className="support-grid-line" />
         <path
           d={path}
@@ -530,12 +603,24 @@ function ChartLine({ metrics, progress }: { metrics: StoryMetric[]; progress: nu
         />
         {points.map((point, index) => {
           const reveal = clamp(progress * metrics.length - index * 0.3);
+          const isEdge = index === 0 || index === points.length - 1;
+          const labelY = isEdge ? point.y + labelPadding : point.y - labelPadding;
+          const labelAnchor = index === 0 ? "start" : index === points.length - 1 ? "end" : "middle";
+          const dx = index === 0 ? 6 : index === points.length - 1 ? -6 : 0;
+          const dy = isEdge ? 8 : -2;
 
           return (
             <g key={point.metric.label} style={{ opacity: 0.3 + reveal * 0.7 }}>
               <circle cx={point.x} cy={point.y} r={7} fill={point.metric.color} />
               <circle cx={point.x} cy={point.y} r={12} className="support-line-glow" style={{ stroke: point.metric.color }} />
-              <text x={point.x} y={height - 8} textAnchor="middle" className="support-line-label">
+              <text
+                x={point.x}
+                y={labelY}
+                dx={dx}
+                dy={dy}
+                textAnchor={labelAnchor}
+                className={`support-line-label${isEdge ? " is-edge" : ""}`}
+              >
                 {point.metric.label}
               </text>
             </g>
@@ -603,6 +688,59 @@ function ChartFlow({ metrics, progress }: { metrics: StoryMetric[]; progress: nu
   );
 }
 
+function MethodsSourcesCard({
+  title,
+  subtitle,
+  methods,
+  sources,
+  zipHref,
+  progress
+}: {
+  title: string;
+  subtitle: string;
+  methods: string[];
+  sources: { label: string; href: string }[];
+  zipHref: string;
+  progress: number;
+}) {
+  return (
+    <div className="support-methods-card">
+      <div className="support-methods-panel">
+        <div className="support-methods-section-title">Methods</div>
+        <ul className="support-methods-list">
+          {methods.map((method) => (
+            <li key={method} className="support-methods-item">
+              {method}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="support-methods-panel">
+        <div className="support-methods-section-title">Sources</div>
+        <ul className="support-methods-list">
+          {sources.map((source) => (
+            <li key={source.label} className="support-methods-item">
+              <a href={source.href} target={source.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
+                {source.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <a className="support-zip-link" href={zipHref}>
+          Download presentation zip
+        </a>
+        <div className="support-methods-progress">
+          <div className="support-progress-track">
+            <span className="support-progress-fill" style={{ width: `${Math.max(8, progress * 100)}%` }} />
+          </div>
+          <div className="support-methods-note">{title}</div>
+          <div className="support-methods-note support-methods-note-muted">{subtitle}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StoryGraphicCard({ step, progress }: { step: StoryStep; progress: number }) {
   return (
     <div className="story-graphic-card">
@@ -619,6 +757,16 @@ function StoryGraphicCard({ step, progress }: { step: StoryStep; progress: numbe
         {step.graphic.kind === "rings" ? <ChartRings metrics={step.graphic.metrics} progress={progress} /> : null}
         {step.graphic.kind === "line" ? <ChartLine metrics={step.graphic.metrics} progress={progress} /> : null}
         {step.graphic.kind === "flow" ? <ChartFlow metrics={step.graphic.metrics} progress={progress} /> : null}
+        {step.graphic.kind === "sources" ? (
+          <MethodsSourcesCard
+            title={step.graphic.title}
+            subtitle={step.graphic.subtitle}
+            methods={step.graphic.methods}
+            sources={step.graphic.sources}
+            zipHref={step.graphic.zipHref}
+            progress={progress}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -641,8 +789,17 @@ export default function CriticalMineralsStory() {
   const reducedMotion = useReducedMotion();
   const activeStep = STORY_STEPS[activeStepIndex];
   const lastStepIndex = STORY_STEPS.length - 1;
-  const { renderedLines, progress, cursorLineIndex } = useTypewriter(
-    activeStep.lines,
+  const typedBlocks = useMemo<StoryTextBlock[]>(
+    () => [
+      { kind: "title", text: activeStep.title },
+      { kind: "label", text: activeStep.label },
+      { kind: "description", text: activeStep.description },
+      ...activeStep.lines.map((text): StoryTextBlock => ({ kind: "body", text }))
+    ],
+    [activeStep.description, activeStep.label, activeStep.lines, activeStep.title]
+  );
+  const { renderedLines, progress, cursorBlockIndex } = useTypewriter(
+    typedBlocks,
     `${activeStepIndex}-${activeStep.title}`,
     reducedMotion
   );
@@ -764,18 +921,18 @@ export default function CriticalMineralsStory() {
       window.clearTimeout(idleTimerRef.current);
     }
 
-    if (activeStepIndex !== lastStepIndex || isTransitioning || reducedMotion) {
+    const lockRotation = reducedMotion || isTransitioning || activeStepIndex !== lastStepIndex;
+    if (lockRotation) {
+      controls.autoRotate = false;
       return undefined;
     }
 
-    const elapsed = Date.now() - lastInteractionAtRef.current;
-    const remaining = Math.max(0, IDLE_ROTATE_DELAY_MS - elapsed);
-
     idleTimerRef.current = window.setTimeout(() => {
-      if (activeStepIndex === lastStepIndex && !isTransitioning) {
-        controls.autoRotate = true;
+      const latestControls = globeRef.current?.controls?.();
+      if (latestControls) {
+        latestControls.autoRotate = true;
       }
-    }, remaining);
+    }, IDLE_ROTATE_DELAY_MS);
 
     return () => {
       if (idleTimerRef.current) {
@@ -841,8 +998,6 @@ export default function CriticalMineralsStory() {
           <div className="story-kicker">
             SECTION {String(activeStepIndex + 1).padStart(2, "0")} OF {String(STORY_STEPS.length).padStart(2, "0")}
           </div>
-          <div className="story-title">{activeStep.title}</div>
-          <div className="story-eyebrow">{activeStep.label}</div>
         </div>
 
         <div className="story-terminal">
@@ -855,21 +1010,24 @@ export default function CriticalMineralsStory() {
 
           <div className="story-typed-copy" aria-live="polite" aria-atomic="true">
             {renderedLines.map((line, index) => {
-              const showCursor = index === cursorLineIndex;
+              const showCursor = index === cursorBlockIndex;
+              const kind = typedBlocks[index]?.kind ?? "body";
 
               return (
-                <p key={`${activeStepIndex}-${index}`} className={`story-typed-line${line ? "" : " is-empty"}`}>
-                  <span>{line || "\u00A0"}</span>
-                  {showCursor ? <span className="story-cursor" aria-hidden="true" /> : null}
+                <p
+                  key={`${activeStepIndex}-${index}`}
+                  className={`story-typed-line story-typed-${kind}${line ? "" : " is-empty"}`}
+                >
+                  <span className="story-typed-text">
+                    {line || "\u00A0"}
+                    {showCursor ? <span className="story-cursor" aria-hidden="true" /> : null}
+                  </span>
                 </p>
               );
             })}
           </div>
 
           <div className="story-terminal-footer">
-            <div className="story-meta">
-              <span>{activeStep.description}</span>
-            </div>
             <div className="story-progress-block">
               <div className="story-progress-track">
                 <span className="story-progress-fill" style={{ width: `${Math.max(6, progress * 100)}%`, background: activeStep.accent }} />
@@ -885,7 +1043,7 @@ export default function CriticalMineralsStory() {
         <div className="story-dots" aria-label="Story navigation">
           {STORY_STEPS.map((step, index) => (
             <button
-              key={step.title}
+              key={`${step.title}-${step.label}-${index}`}
               type="button"
               className={`story-dot${index === activeStepIndex ? " is-active" : ""}`}
               aria-label={`Jump to ${step.title}`}
