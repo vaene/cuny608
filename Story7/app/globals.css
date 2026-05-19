@@ -80,18 +80,19 @@ body {
 
 .story-caret {
   position: fixed;
-  top: 50%;
+  top: auto;
+  bottom: clamp(6.5rem, 18vh, 14rem);
   z-index: 30;
-  width: clamp(3.25rem, 4.4vw, 4.5rem);
-  height: clamp(3.25rem, 4.4vw, 4.5rem);
-  transform: translateY(-50%);
+  width: clamp(2.35rem, 3.1vw, 3.15rem);
+  height: clamp(2.35rem, 3.1vw, 3.15rem);
+  transform: none;
   display: grid;
   place-items: center;
   border: 1px solid var(--story-border);
   border-radius: 999px;
   background: var(--story-panel);
   color: var(--story-text);
-  font-size: clamp(2rem, 2.8vw, 3rem);
+  font-size: clamp(1.45rem, 2.05vw, 2.05rem);
   line-height: 1;
   cursor: pointer;
   backdrop-filter: blur(20px);
@@ -101,7 +102,7 @@ body {
 }
 
 .story-caret:hover {
-  transform: translateY(-50%) scale(1.03);
+  transform: scale(1.02);
   border-color: rgba(103, 232, 249, 0.42);
   background: rgba(15, 24, 36, 0.64);
 }
@@ -820,13 +821,12 @@ body {
   }
 
   .story-caret {
-    top: auto;
     bottom: 1rem;
     transform: none;
   }
 
   .story-caret:hover {
-    transform: scale(1.03);
+    transform: scale(1.02);
   }
 
   .story-caret-left {

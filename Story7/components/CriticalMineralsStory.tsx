@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import type { ForwardRefExoticComponent, RefAttributes } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
+import * as THREE from "three";
 
 type CountryFeature = {
   properties: {
@@ -61,6 +62,7 @@ type StoryStep = {
   description: string;
   pov: { lat: number; lng: number; altitude: number };
   lines: string[];
+  flagCountries: string[];
   graphic: StoryGraphic;
   accent: string;
 };
@@ -85,6 +87,7 @@ type GlobeProps = {
   onGlobeReady?: () => void;
   polygonAltitude: (feature: CountryFeature) => number;
   polygonCapColor: (feature: CountryFeature) => string;
+  polygonCapMaterial: (feature: CountryFeature) => THREE.Material;
   polygonSideColor: () => string;
   polygonStrokeColor: () => string;
   polygonLabel: (feature: CountryFeature) => string;
@@ -96,14 +99,136 @@ const Globe = dynamic(() => import("react-globe.gl"), { ssr: false }) as unknown
   GlobeProps & RefAttributes<GlobeHandle>
 >;
 
-const COUNTRIES_DATA_URL = "/Story7/datasets/ne_110m_admin_0_countries.geojson";
+const COUNTRIES_DATA_URL = "/608/Story7/datasets/ne_110m_admin_0_countries.geojson";
 const EARTH_TEXTURE = "https://cdn.jsdelivr.net/npm/three-globe@2.32/example/img/earth-night.jpg";
 const BACKGROUND_TEXTURE = "https://cdn.jsdelivr.net/npm/three-globe@2.32/example/img/night-sky.png";
 const STORY_TRANSITION_MS = 1450;
 const IDLE_ROTATE_DELAY_MS = 4200;
 const AUTO_ROTATE_SPEED = 0.28;
 const LINE_DELAY_MS = 260;
-const PRESENTATION_ZIP_HREF = "/Story7/artifacts/story7-presentation-source.zip";
+const PRESENTATION_ZIP_HREF = "/608/Story7/artifacts/story7-presentation-source.zip";
+const STORY_VOICE_LANG = "en-GB";
+const STORY_VOICE_HINTS = [
+  "google uk english female",
+  "microsoft libby online",
+  "susan",
+  "serena",
+  "victoria",
+  "kate",
+  "george"
+];
+
+function flagSvgDataUrl(code: string) {
+  const upper = code.toUpperCase();
+  let svg = "";
+
+  if (upper === "US") {
+    const stars = Array.from({ length: 5 }, (_, row) =>
+      Array.from({ length: 6 }, (_, column) => `<circle cx="${28 + column * 33 + (row % 2 ? 16 : 0)}" cy="${28 + row * 29}" r="4" fill="#ffffff"/>`).join("")
+    ).join("");
+
+    svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+        <rect width="640" height="480" fill="#b22234"/>
+        <g fill="#ffffff">
+          <rect y="37" width="640" height="37"/>
+          <rect y="111" width="640" height="37"/>
+          <rect y="185" width="640" height="37"/>
+          <rect y="259" width="640" height="37"/>
+          <rect y="333" width="640" height="37"/>
+          <rect y="407" width="640" height="37"/>
+        </g>
+        <rect width="280" height="259" fill="#3c3b6e"/>
+        <g>${stars}</g>
+      </svg>
+    `;
+  } else if (upper === "CN") {
+    svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+        <rect width="640" height="480" fill="#de2910"/>
+        <polygon fill="#ffde00" points="120,70 131,104 167,104 138,125 149,160 120,139 91,160 102,125 73,104 109,104"/>
+        <polygon fill="#ffde00" points="235,54 245,68 262,62 252,79 266,92 248,92 243,110 233,94 216,100 225,84 213,70 231,72"/>
+        <polygon fill="#ffde00" points="280,105 287,123 306,121 291,133 297,151 280,141 263,151 269,133 254,121 273,123"/>
+        <polygon fill="#ffde00" points="280,169 287,187 306,185 291,197 297,215 280,205 263,215 269,197 254,185 273,187"/>
+        <polygon fill="#ffde00" points="235,220 245,234 262,228 252,245 266,258 248,258 243,276 233,260 216,266 225,250 213,236 231,238"/>
+      </svg>
+    `;
+  } else if (upper === "CL") {
+    svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+        <rect width="640" height="480" fill="#ffffff"/>
+        <rect y="240" width="640" height="240" fill="#d52b1e"/>
+        <rect width="213" height="240" fill="#0039a6"/>
+        <polygon fill="#ffffff" points="106,64 119,103 160,103 127,127 139,166 106,142 73,166 85,127 52,103 93,103"/>
+      </svg>
+    `;
+  } else if (upper === "AR") {
+    svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+        <rect width="640" height="160" fill="#74acdf"/>
+        <rect y="160" width="640" height="160" fill="#ffffff"/>
+        <rect y="320" width="640" height="160" fill="#74acdf"/>
+        <circle cx="320" cy="240" r="50" fill="#f6b40e"/>
+        <g stroke="#f6b40e" stroke-width="8" stroke-linecap="round">
+          <line x1="320" y1="170" x2="320" y2="154"/>
+          <line x1="320" y1="326" x2="320" y2="310"/>
+          <line x1="250" y1="240" x2="234" y2="240"/>
+          <line x1="406" y1="240" x2="390" y2="240"/>
+          <line x1="272" y1="192" x2="260" y2="180"/>
+          <line x1="368" y1="288" x2="380" y2="300"/>
+          <line x1="272" y1="288" x2="260" y2="300"/>
+          <line x1="368" y1="192" x2="380" y2="180"/>
+        </g>
+      </svg>
+    `;
+  } else if (upper === "PE") {
+    svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+        <rect width="213" height="480" fill="#d91023"/>
+        <rect x="213" width="214" height="480" fill="#ffffff"/>
+        <rect x="427" width="213" height="480" fill="#d91023"/>
+      </svg>
+    `;
+  } else if (upper === "BR") {
+    svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+        <rect width="640" height="480" fill="#009b3a"/>
+        <polygon fill="#ffdf00" points="320,82 512,240 320,398 128,240"/>
+        <circle cx="320" cy="240" r="94" fill="#002776"/>
+        <path d="M226 235c45-35 145-48 236-24c-52 9-152 37-236 24Z" fill="#ffffff" opacity="0.8"/>
+      </svg>
+    `;
+  } else if (upper === "RU") {
+    svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+        <rect width="640" height="160" fill="#ffffff"/>
+        <rect y="160" width="640" height="160" fill="#0039a6"/>
+        <rect y="320" width="640" height="160" fill="#d52b1e"/>
+      </svg>
+    `;
+  } else {
+    svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+        <rect width="640" height="480" fill="#64748b"/>
+      </svg>
+    `;
+  }
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function selectBritishVoice(voices: SpeechSynthesisVoice[]) {
+  const britishVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith("en-gb"));
+
+  for (const hint of STORY_VOICE_HINTS) {
+    const matchedVoice = britishVoices.find((voice) => voice.name.toLowerCase().includes(hint));
+    if (matchedVoice) {
+      return matchedVoice;
+    }
+  }
+
+  return britishVoices[0] ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ?? voices[0] ?? null;
+}
 
 const STORY_STEPS: StoryStep[] = [
   {
@@ -117,6 +242,7 @@ const STORY_STEPS: StoryStep[] = [
       "We feel the battery, the car, and the grid upgrade, but not always the path that made them possible.",
       "That gap between domestic demand and upstream control is where resilience starts."
     ],
+    flagCountries: ["US"],
     graphic: {
       kind: "bars",
       orientation: "vertical",
@@ -142,6 +268,7 @@ const STORY_STEPS: StoryStep[] = [
       "It controls the middle of the map, where refining and fabrication decide who captures value.",
       "That middle matters because a supply chain is only as open as its bottleneck."
     ],
+    flagCountries: ["CN"],
     graphic: {
       kind: "rings",
       title: "Concentration in the middle",
@@ -165,6 +292,7 @@ const STORY_STEPS: StoryStep[] = [
       "Chile, Argentina, Peru, and Brazil each sit in a different part of the chain.",
       "The region matters because concentration across borders is still concentration."
     ],
+    flagCountries: ["CL", "AR", "PE", "BR"],
     graphic: {
       kind: "bars",
       orientation: "horizontal",
@@ -190,6 +318,7 @@ const STORY_STEPS: StoryStep[] = [
       "When sanctions, war, or transport shocks hit, the effect is not just price.",
       "The whole map tightens because downstream buyers have to reroute fast."
     ],
+    flagCountries: ["RU"],
     graphic: {
       kind: "line",
       title: "Stress propagates",
@@ -215,6 +344,7 @@ const STORY_STEPS: StoryStep[] = [
       "Recycling and substitution help, but they do not erase the need for raw materials.",
       "The chart on the right shows resilience as a connected system, not a single move."
     ],
+    flagCountries: [],
     graphic: {
       kind: "flow",
       title: "A connected response",
@@ -239,6 +369,7 @@ const STORY_STEPS: StoryStep[] = [
       "The answer is not one fix. It is a shorter chain, a broader base, and fewer single points of failure.",
       "That is how the map moves from exposure toward durability."
     ],
+    flagCountries: ["US"],
     graphic: {
       kind: "bars",
       orientation: "vertical",
@@ -264,6 +395,7 @@ const STORY_STEPS: StoryStep[] = [
       "Sources: country geometry, public population estimates, and the project data files stored with the presentation source bundle.",
       "Use the archive to recreate the deck structure, data inputs, and export settings."
     ],
+    flagCountries: [],
     graphic: {
       kind: "sources",
       title: "Methods and sources",
@@ -274,8 +406,8 @@ const STORY_STEPS: StoryStep[] = [
         "Charts are synchronized to the typed copy so the visual builds with the story."
       ],
       sources: [
-        { label: "GeoJSON countries", href: "/Story7/datasets/ne_110m_admin_0_countries.geojson" },
-        { label: "App source", href: "/Story7/" },
+        { label: "GeoJSON countries", href: "/608/Story7/datasets/ne_110m_admin_0_countries.geojson" },
+        { label: "App source", href: "/608/Story7/" },
         { label: "Presentation zip", href: PRESENTATION_ZIP_HREF }
       ],
       zipHref: PRESENTATION_ZIP_HREF
@@ -283,6 +415,8 @@ const STORY_STEPS: StoryStep[] = [
     accent: "#a78bfa"
   }
 ];
+
+const ALL_FLAG_COUNTRIES = Array.from(new Set(STORY_STEPS.flatMap((step) => step.flagCountries)));
 
 function clamp(value: number, min = 0, max = 1) {
   return Math.min(max, Math.max(min, value));
@@ -340,6 +474,16 @@ function getCharDelay(current: string, next: string | undefined) {
   }
 
   return 24;
+}
+
+function estimateTextDuration(text: string) {
+  let duration = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    duration += getCharDelay(text[index] ?? "", text[index + 1]);
+  }
+
+  return duration;
 }
 
 function useTypewriter(blocks: StoryTextBlock[], stepKey: string, reducedMotion: boolean) {
@@ -429,7 +573,143 @@ function useTypewriter(blocks: StoryTextBlock[], stepKey: string, reducedMotion:
     ? Math.max(0, blocks.length - 1)
     : Math.min(blockIndex, Math.max(0, blocks.length - 1));
 
-  return { renderedLines, progress, cursorBlockIndex };
+  return { renderedLines, progress, cursorBlockIndex, blockIndex };
+}
+
+function useFlagMaterials(flagCountries: string[]) {
+  const [materials, setMaterials] = useState<Record<string, THREE.MeshBasicMaterial>>({});
+  const uniqueFlagCountries = useMemo(() => Array.from(new Set(flagCountries)), [flagCountries]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
+
+    if (uniqueFlagCountries.length === 0) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    async function loadMaterials() {
+      const entries = await Promise.all(
+        uniqueFlagCountries.map(async (code) => {
+          const texture = await loader.loadAsync(flagSvgDataUrl(code));
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.needsUpdate = true;
+
+          const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 0.5,
+            depthWrite: false,
+            side: THREE.DoubleSide
+          });
+
+          material.needsUpdate = true;
+          return [code, material] as const;
+        })
+      );
+
+      if (!cancelled) {
+        setMaterials(Object.fromEntries(entries));
+      }
+    }
+
+    loadMaterials().catch(() => {
+      if (!cancelled) {
+        setMaterials({});
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [uniqueFlagCountries]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(materials).forEach((material) => {
+        material.map?.dispose();
+        material.dispose();
+      });
+    };
+  }, [materials]);
+
+  return materials;
+}
+
+function useSpeechNarration(blocks: StoryTextBlock[], stepKey: string) {
+  const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) {
+      return;
+    }
+
+    const synth = window.speechSynthesis;
+
+    const updateVoice = () => {
+      voiceRef.current = selectBritishVoice(synth.getVoices());
+    };
+
+    updateVoice();
+    synth.addEventListener?.("voiceschanged", updateVoice);
+
+    return () => {
+      synth.removeEventListener?.("voiceschanged", updateVoice);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!("speechSynthesis" in window) || blocks.length === 0) {
+      return;
+    }
+
+    const synth = window.speechSynthesis;
+    let cancelled = false;
+    const timers: number[] = [];
+    const startDelayMs = 160;
+
+    synth.cancel();
+
+    let elapsed = startDelayMs;
+
+    blocks.forEach((block, index) => {
+      const text = block.text.trim();
+      if (!text) {
+        return;
+      }
+
+      const timer = window.setTimeout(() => {
+        if (cancelled) {
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = STORY_VOICE_LANG;
+        utterance.rate = Math.max(1.35, Math.min(2.15, 2.15 - text.length / 220));
+        utterance.pitch = 1.02;
+        utterance.volume = 1;
+
+        const voice = voiceRef.current;
+        if (voice) {
+          utterance.voice = voice;
+        }
+
+        synth.speak(utterance);
+      }, elapsed);
+
+      timers.push(timer);
+      elapsed += estimateTextDuration(block.text) + (index < blocks.length - 1 ? LINE_DELAY_MS : 0);
+    });
+
+    return () => {
+      cancelled = true;
+      timers.forEach((timer) => window.clearTimeout(timer));
+      synth.cancel();
+    };
+  }, [blocks, stepKey]);
 }
 
 function ChartBars({
@@ -803,6 +1083,7 @@ export default function CriticalMineralsStory() {
     `${activeStepIndex}-${activeStep.title}`,
     reducedMotion
   );
+  useSpeechNarration(typedBlocks, `${activeStepIndex}-${activeStep.title}`);
 
   useEffect(() => {
     lastInteractionAtRef.current = Date.now();
@@ -858,6 +1139,38 @@ export default function CriticalMineralsStory() {
     () => d3.scaleSequentialSqrt((t) => d3.interpolateRgb("#143a64", "#67e8f9")(t)).domain([0, maxPopulation]),
     [maxPopulation]
   );
+
+  const defaultCapMaterials = useMemo(() => {
+    const materials = new Map<string, THREE.MeshPhongMaterial>();
+
+    countryFeatures.forEach((feature) => {
+      const code = feature.properties.ISO_A2;
+      const color = colorScale(Number(feature.properties.POP_EST) || 0);
+      materials.set(
+        code,
+        new THREE.MeshPhongMaterial({
+          color,
+          flatShading: true,
+          shininess: 10
+        })
+      );
+    });
+
+    return materials;
+  }, [colorScale, countryFeatures]);
+
+  const flagMaterials = useFlagMaterials(ALL_FLAG_COUNTRIES);
+  const activeFlagCountries = useMemo(() => new Set(activeStep.flagCountries), [activeStep.flagCountries]);
+  const polygonCapMaterial = useMemo(() => {
+    return (feature: CountryFeature) => {
+      const code = feature.properties.ISO_A2;
+      return (
+        (activeFlagCountries.has(code) ? flagMaterials[code] : undefined) ??
+        defaultCapMaterials.get(code) ??
+        new THREE.MeshPhongMaterial({ color: colorScale(Number(feature.properties.POP_EST) || 0), flatShading: true })
+      );
+    };
+  }, [activeFlagCountries, colorScale, defaultCapMaterials, flagMaterials]);
 
   const markInteraction = () => {
     lastInteractionAtRef.current = Date.now();
@@ -976,6 +1289,7 @@ export default function CriticalMineralsStory() {
         polygonCapColor={(feature: CountryFeature) =>
           feature === hoverCountry ? "steelblue" : colorScale(Number(feature.properties.POP_EST) || 0)
         }
+        polygonCapMaterial={polygonCapMaterial}
         polygonSideColor={() => "rgba(0, 0, 0, 0.18)"}
         polygonStrokeColor={() => "#0f172a"}
         polygonLabel={({ properties }: CountryFeature) => `
