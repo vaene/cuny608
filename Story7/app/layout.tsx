@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Critical Minerals Story Globe",
-  description: "A narrative globe navigator built with react-globe.gl."
+  description: "A globe-driven story with typed narrative panels and supporting charts."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,5 +1,5 @@
-import ChoroplethCountriesGlobe from "@/components/ChoroplethCountriesGlobe";
+import CriticalMineralsStory from "@/components/CriticalMineralsStory";
 
 export default function Home() {
-  return <ChoroplethCountriesGlobe />;
+  return <CriticalMineralsStory />;
 }
