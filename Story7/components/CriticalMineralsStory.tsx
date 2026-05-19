@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { ForwardRefExoticComponent, RefAttributes } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
 import * as THREE from "three";
 
@@ -12,6 +12,7 @@ type CountryFeature = {
     ISO_A3: string;
     ADMIN: string;
     POP_EST: number;
+    CONTINENT?: string;
   };
 };
 
@@ -19,6 +20,14 @@ type StoryMetric = {
   label: string;
   value: number;
   color: string;
+};
+
+type RareEarthCard = {
+  symbol: string;
+  atomicNumber: number;
+  name: string;
+  note: string;
+  accent: string;
 };
 
 type StoryGraphic =
@@ -63,6 +72,7 @@ type StoryStep = {
   pov: { lat: number; lng: number; altitude: number };
   lines: string[];
   flagCountries: string[];
+  rareEarths: RareEarthCard[];
   graphic: StoryGraphic;
   accent: string;
 };
@@ -86,7 +96,7 @@ type GlobeProps = {
   polygonsData: CountryFeature[];
   onGlobeReady?: () => void;
   polygonAltitude: (feature: CountryFeature) => number;
-  polygonCapColor: (feature: CountryFeature) => string;
+  polygonCapColor?: (feature: CountryFeature) => string;
   polygonCapMaterial: (feature: CountryFeature) => THREE.Material;
   polygonSideColor: () => string;
   polygonStrokeColor: () => string;
@@ -105,7 +115,9 @@ const BACKGROUND_TEXTURE = "https://cdn.jsdelivr.net/npm/three-globe@2.32/exampl
 const STORY_TRANSITION_MS = 1450;
 const IDLE_ROTATE_DELAY_MS = 4200;
 const AUTO_ROTATE_SPEED = 0.28;
-const LINE_DELAY_MS = 260;
+const TYPEWRITER_SLOWDOWN = 1.433;
+const NARRATION_SLOWDOWN = 1.0;
+const LINE_DELAY_MS = Math.round(260 * TYPEWRITER_SLOWDOWN);
 const PRESENTATION_ZIP_HREF = "/608/Story7/artifacts/story7-presentation-source.zip";
 const STORY_VOICE_LANG = "en-GB";
 const STORY_VOICE_HINTS = [
@@ -117,104 +129,44 @@ const STORY_VOICE_HINTS = [
   "kate",
   "george"
 ];
+const FLAG_IMAGE_URLS: Record<string, string> = {
+  US: "/608/Story7/flags/us.png",
+  FR: "/608/Story7/flags/fr.svg",
+  NO: "/608/Story7/flags/no.svg",
+  CN: "/608/Story7/flags/cn.png",
+  CL: "/608/Story7/flags/cl.png",
+  AR: "/608/Story7/flags/ar.png",
+  PE: "/608/Story7/flags/pe.png",
+  BR: "/608/Story7/flags/br.png",
+  RU: "/608/Story7/flags/ru.png",
+  EU: "/608/Story7/flags/eu.png"
+};
+const FULL_RARE_EARTH_CARDS: RareEarthCard[] = [
+  { symbol: "Sc", atomicNumber: 21, name: "Scandium", note: "aerospace alloys", accent: "#38bdf8" },
+  { symbol: "Y", atomicNumber: 39, name: "Yttrium", note: "ceramics and optics", accent: "#67e8f9" },
+  { symbol: "La", atomicNumber: 57, name: "Lanthanum", note: "battery chemistry", accent: "#22c55e" },
+  { symbol: "Ce", atomicNumber: 58, name: "Cerium", note: "polishing and catalysts", accent: "#a78bfa" },
+  { symbol: "Pr", atomicNumber: 59, name: "Praseodymium", note: "motors and alloys", accent: "#f59e0b" },
+  { symbol: "Nd", atomicNumber: 60, name: "Neodymium", note: "high-strength magnets", accent: "#34d399" },
+  { symbol: "Pm", atomicNumber: 61, name: "Promethium", note: "specialized research", accent: "#fb7185" },
+  { symbol: "Sm", atomicNumber: 62, name: "Samarium", note: "defense magnets", accent: "#60a5fa" },
+  { symbol: "Eu", atomicNumber: 63, name: "Europium", note: "displays and phosphors", accent: "#a78bfa" },
+  { symbol: "Gd", atomicNumber: 64, name: "Gadolinium", note: "medical imaging", accent: "#f97316" },
+  { symbol: "Tb", atomicNumber: 65, name: "Terbium", note: "efficient magnets", accent: "#22c55e" },
+  { symbol: "Dy", atomicNumber: 66, name: "Dysprosium", note: "heat resistance", accent: "#67e8f9" },
+  { symbol: "Ho", atomicNumber: 67, name: "Holmium", note: "precision lasers", accent: "#38bdf8" },
+  { symbol: "Er", atomicNumber: 68, name: "Erbium", note: "fiber optics", accent: "#fb7185" },
+  { symbol: "Tm", atomicNumber: 69, name: "Thulium", note: "specialty lasers", accent: "#a78bfa" },
+  { symbol: "Yb", atomicNumber: 70, name: "Ytterbium", note: "precision tools", accent: "#34d399" },
+  { symbol: "Lu", atomicNumber: 71, name: "Lutetium", note: "advanced catalysts", accent: "#f59e0b" }
+];
 
-function flagSvgDataUrl(code: string) {
-  const upper = code.toUpperCase();
-  let svg = "";
+function flagImageUrl(code: string) {
+  return FLAG_IMAGE_URLS[code.toUpperCase()] ?? `https://flagcdn.com/w320/${code.toLowerCase()}.png`;
+}
 
-  if (upper === "US") {
-    const stars = Array.from({ length: 5 }, (_, row) =>
-      Array.from({ length: 6 }, (_, column) => `<circle cx="${28 + column * 33 + (row % 2 ? 16 : 0)}" cy="${28 + row * 29}" r="4" fill="#ffffff"/>`).join("")
-    ).join("");
-
-    svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-        <rect width="640" height="480" fill="#b22234"/>
-        <g fill="#ffffff">
-          <rect y="37" width="640" height="37"/>
-          <rect y="111" width="640" height="37"/>
-          <rect y="185" width="640" height="37"/>
-          <rect y="259" width="640" height="37"/>
-          <rect y="333" width="640" height="37"/>
-          <rect y="407" width="640" height="37"/>
-        </g>
-        <rect width="280" height="259" fill="#3c3b6e"/>
-        <g>${stars}</g>
-      </svg>
-    `;
-  } else if (upper === "CN") {
-    svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-        <rect width="640" height="480" fill="#de2910"/>
-        <polygon fill="#ffde00" points="120,70 131,104 167,104 138,125 149,160 120,139 91,160 102,125 73,104 109,104"/>
-        <polygon fill="#ffde00" points="235,54 245,68 262,62 252,79 266,92 248,92 243,110 233,94 216,100 225,84 213,70 231,72"/>
-        <polygon fill="#ffde00" points="280,105 287,123 306,121 291,133 297,151 280,141 263,151 269,133 254,121 273,123"/>
-        <polygon fill="#ffde00" points="280,169 287,187 306,185 291,197 297,215 280,205 263,215 269,197 254,185 273,187"/>
-        <polygon fill="#ffde00" points="235,220 245,234 262,228 252,245 266,258 248,258 243,276 233,260 216,266 225,250 213,236 231,238"/>
-      </svg>
-    `;
-  } else if (upper === "CL") {
-    svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-        <rect width="640" height="480" fill="#ffffff"/>
-        <rect y="240" width="640" height="240" fill="#d52b1e"/>
-        <rect width="213" height="240" fill="#0039a6"/>
-        <polygon fill="#ffffff" points="106,64 119,103 160,103 127,127 139,166 106,142 73,166 85,127 52,103 93,103"/>
-      </svg>
-    `;
-  } else if (upper === "AR") {
-    svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-        <rect width="640" height="160" fill="#74acdf"/>
-        <rect y="160" width="640" height="160" fill="#ffffff"/>
-        <rect y="320" width="640" height="160" fill="#74acdf"/>
-        <circle cx="320" cy="240" r="50" fill="#f6b40e"/>
-        <g stroke="#f6b40e" stroke-width="8" stroke-linecap="round">
-          <line x1="320" y1="170" x2="320" y2="154"/>
-          <line x1="320" y1="326" x2="320" y2="310"/>
-          <line x1="250" y1="240" x2="234" y2="240"/>
-          <line x1="406" y1="240" x2="390" y2="240"/>
-          <line x1="272" y1="192" x2="260" y2="180"/>
-          <line x1="368" y1="288" x2="380" y2="300"/>
-          <line x1="272" y1="288" x2="260" y2="300"/>
-          <line x1="368" y1="192" x2="380" y2="180"/>
-        </g>
-      </svg>
-    `;
-  } else if (upper === "PE") {
-    svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-        <rect width="213" height="480" fill="#d91023"/>
-        <rect x="213" width="214" height="480" fill="#ffffff"/>
-        <rect x="427" width="213" height="480" fill="#d91023"/>
-      </svg>
-    `;
-  } else if (upper === "BR") {
-    svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-        <rect width="640" height="480" fill="#009b3a"/>
-        <polygon fill="#ffdf00" points="320,82 512,240 320,398 128,240"/>
-        <circle cx="320" cy="240" r="94" fill="#002776"/>
-        <path d="M226 235c45-35 145-48 236-24c-52 9-152 37-236 24Z" fill="#ffffff" opacity="0.8"/>
-      </svg>
-    `;
-  } else if (upper === "RU") {
-    svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-        <rect width="640" height="160" fill="#ffffff"/>
-        <rect y="160" width="640" height="160" fill="#0039a6"/>
-        <rect y="320" width="640" height="160" fill="#d52b1e"/>
-      </svg>
-    `;
-  } else {
-    svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-        <rect width="640" height="480" fill="#64748b"/>
-      </svg>
-    `;
-  }
-
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+function getPolygonFlagKey(feature: CountryFeature) {
+  return feature.properties.ISO_A2;
 }
 
 function selectBritishVoice(voices: SpeechSynthesisVoice[]) {
@@ -243,6 +195,7 @@ const STORY_STEPS: StoryStep[] = [
       "That gap between domestic demand and upstream control is where resilience starts."
     ],
     flagCountries: ["US"],
+    rareEarths: FULL_RARE_EARTH_CARDS,
     graphic: {
       kind: "bars",
       orientation: "vertical",
@@ -269,6 +222,7 @@ const STORY_STEPS: StoryStep[] = [
       "That middle matters because a supply chain is only as open as its bottleneck."
     ],
     flagCountries: ["CN"],
+    rareEarths: FULL_RARE_EARTH_CARDS,
     graphic: {
       kind: "rings",
       title: "Concentration in the middle",
@@ -293,6 +247,7 @@ const STORY_STEPS: StoryStep[] = [
       "The region matters because concentration across borders is still concentration."
     ],
     flagCountries: ["CL", "AR", "PE", "BR"],
+    rareEarths: FULL_RARE_EARTH_CARDS,
     graphic: {
       kind: "bars",
       orientation: "horizontal",
@@ -319,6 +274,7 @@ const STORY_STEPS: StoryStep[] = [
       "The whole map tightens because downstream buyers have to reroute fast."
     ],
     flagCountries: ["RU"],
+    rareEarths: FULL_RARE_EARTH_CARDS,
     graphic: {
       kind: "line",
       title: "Stress propagates",
@@ -345,6 +301,7 @@ const STORY_STEPS: StoryStep[] = [
       "The chart on the right shows resilience as a connected system, not a single move."
     ],
     flagCountries: [],
+    rareEarths: FULL_RARE_EARTH_CARDS,
     graphic: {
       kind: "flow",
       title: "A connected response",
@@ -370,6 +327,7 @@ const STORY_STEPS: StoryStep[] = [
       "That is how the map moves from exposure toward durability."
     ],
     flagCountries: ["US"],
+    rareEarths: FULL_RARE_EARTH_CARDS,
     graphic: {
       kind: "bars",
       orientation: "vertical",
@@ -396,6 +354,7 @@ const STORY_STEPS: StoryStep[] = [
       "Use the archive to recreate the deck structure, data inputs, and export settings."
     ],
     flagCountries: [],
+    rareEarths: FULL_RARE_EARTH_CARDS,
     graphic: {
       kind: "sources",
       title: "Methods and sources",
@@ -486,21 +445,23 @@ function estimateTextDuration(text: string) {
   return duration;
 }
 
-function useTypewriter(blocks: StoryTextBlock[], stepKey: string, reducedMotion: boolean) {
+function useTypewriter(blocks: StoryTextBlock[], stepKey: string, reducedMotion: boolean, enabled: boolean) {
   const [blockIndex, setBlockIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const timer = window.setTimeout(() => {
       setBlockIndex(0);
       setCharIndex(0);
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [stepKey]);
+  }, [enabled, stepKey]);
 
   useEffect(() => {
-    if (reducedMotion || blocks.length === 0) return;
+    if (!enabled || reducedMotion || blocks.length === 0) return;
 
     if (blockIndex >= blocks.length) {
       return;
@@ -514,7 +475,7 @@ function useTypewriter(blocks: StoryTextBlock[], stepKey: string, reducedMotion:
       const next = text[charIndex + 1];
       timer = window.setTimeout(() => {
         setCharIndex((value) => value + 1);
-      }, getCharDelay(current, next));
+      }, Math.round(getCharDelay(current, next) * TYPEWRITER_SLOWDOWN));
     } else if (blockIndex < blocks.length - 1) {
       timer = window.setTimeout(() => {
         setBlockIndex((value) => value + 1);
@@ -527,9 +488,13 @@ function useTypewriter(blocks: StoryTextBlock[], stepKey: string, reducedMotion:
         window.clearTimeout(timer);
       }
     };
-  }, [blockIndex, blocks, charIndex, reducedMotion]);
+  }, [blockIndex, blocks, charIndex, enabled, reducedMotion]);
 
   const renderedLines = useMemo(() => {
+    if (!enabled) {
+      return blocks.map(() => "");
+    }
+
     if (reducedMotion) {
       return blocks.map((block) => block.text);
     }
@@ -545,9 +510,13 @@ function useTypewriter(blocks: StoryTextBlock[], stepKey: string, reducedMotion:
 
       return block.text.slice(0, charIndex);
     });
-  }, [blockIndex, blocks, charIndex, reducedMotion]);
+  }, [blockIndex, blocks, charIndex, enabled, reducedMotion]);
 
   const progress = useMemo(() => {
+    if (!enabled) {
+      return 0;
+    }
+
     const totalChars = blocks.reduce((sum, block) => sum + block.text.length, 0);
 
     if (reducedMotion || totalChars === 0) {
@@ -567,18 +536,21 @@ function useTypewriter(blocks: StoryTextBlock[], stepKey: string, reducedMotion:
     }
 
     return clamp(charsTyped / totalChars);
-  }, [blockIndex, blocks, charIndex, reducedMotion]);
+  }, [blockIndex, blocks, charIndex, enabled, reducedMotion]);
 
   const cursorBlockIndex = reducedMotion
     ? Math.max(0, blocks.length - 1)
-    : Math.min(blockIndex, Math.max(0, blocks.length - 1));
+    : !enabled
+      ? 0
+      : Math.min(blockIndex, Math.max(0, blocks.length - 1));
 
   return { renderedLines, progress, cursorBlockIndex, blockIndex };
 }
 
 function useFlagMaterials(flagCountries: string[]) {
-  const [materials, setMaterials] = useState<Record<string, THREE.MeshBasicMaterial>>({});
   const uniqueFlagCountries = useMemo(() => Array.from(new Set(flagCountries)), [flagCountries]);
+
+  const [materials, setMaterials] = useState<Record<string, THREE.MeshBasicMaterial>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -591,32 +563,36 @@ function useFlagMaterials(flagCountries: string[]) {
       };
     }
 
-    async function loadMaterials() {
-      const entries = await Promise.all(
-        uniqueFlagCountries.map(async (code) => {
-          const texture = await loader.loadAsync(flagSvgDataUrl(code));
-          texture.colorSpace = THREE.SRGBColorSpace;
-          texture.needsUpdate = true;
+    async function loadFlagMaterials() {
+      const entries = (
+        await Promise.allSettled(
+          uniqueFlagCountries.map(async (code) => {
+            const texture = await loader.loadAsync(flagImageUrl(code));
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.needsUpdate = true;
 
-          const material = new THREE.MeshBasicMaterial({
-            map: texture,
-            transparent: true,
-            opacity: 0.5,
-            depthWrite: false,
-            side: THREE.DoubleSide
-          });
+            const material = new THREE.MeshBasicMaterial({
+              map: texture,
+              transparent: true,
+              opacity: 0.5,
+              depthWrite: false,
+              side: THREE.DoubleSide
+            });
 
-          material.needsUpdate = true;
-          return [code, material] as const;
-        })
-      );
+            material.needsUpdate = true;
+            return [code, material] as const;
+          })
+        )
+      )
+        .filter((result): result is PromiseFulfilledResult<readonly [string, THREE.MeshBasicMaterial]> => result.status === "fulfilled")
+        .map((result) => result.value);
 
       if (!cancelled) {
         setMaterials(Object.fromEntries(entries));
       }
     }
 
-    loadMaterials().catch(() => {
+    loadFlagMaterials().catch(() => {
       if (!cancelled) {
         setMaterials({});
       }
@@ -639,77 +615,125 @@ function useFlagMaterials(flagCountries: string[]) {
   return materials;
 }
 
-function useSpeechNarration(blocks: StoryTextBlock[], stepKey: string) {
+function useSpeechNarration(blocks: StoryTextBlock[], stepKey: string, enabled: boolean) {
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const lastSpokenKeyRef = useRef<string>("");
+  const sessionIdRef = useRef(0);
+  const stopSpeechRef = useRef<(() => void) | null>(null);
+  const [narrationStarted, setNarrationStarted] = useState(false);
+
+  const speakBlocks = useCallback((blocksToSpeak: StoryTextBlock[], key: string, lockImmediately = false) => {
+    if (!("speechSynthesis" in window) || blocksToSpeak.length === 0 || lastSpokenKeyRef.current === key) {
+      return;
+    }
+
+    const synth = window.speechSynthesis;
+
+    if (stopSpeechRef.current) {
+      stopSpeechRef.current();
+    }
+
+    synth.cancel();
+    synth.resume?.();
+
+    if (lockImmediately) {
+      lastSpokenKeyRef.current = key;
+    }
+
+    const sessionId = sessionIdRef.current + 1;
+    sessionIdRef.current = sessionId;
+    const sessionTimers: number[] = [];
+    const speakBlock = (text: string) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = STORY_VOICE_LANG;
+      utterance.rate = Math.max(0.82, Math.min(1.08, (1.12 - text.length / 1200) / NARRATION_SLOWDOWN));
+      utterance.pitch = 1.04;
+      utterance.volume = 1;
+      utterance.onstart = () => {
+        lastSpokenKeyRef.current = key;
+        setNarrationStarted(true);
+      };
+
+      const voice = voiceRef.current;
+      if (voice) {
+        utterance.voice = voice;
+      }
+
+      synth.speak(utterance);
+    };
+
+    const stop = () => {
+      sessionTimers.forEach((timer) => window.clearTimeout(timer));
+      if (sessionIdRef.current === sessionId) {
+        synth.cancel();
+      }
+      if (stopSpeechRef.current === stop) {
+        stopSpeechRef.current = null;
+      }
+    };
+
+    stopSpeechRef.current = stop;
+
+    let elapsed = lockImmediately ? 0 : Math.round(120 * NARRATION_SLOWDOWN);
+    blocksToSpeak.forEach((block, index) => {
+      const text = block.text.trim();
+      if (!text) {
+        return;
+      }
+
+      if (lockImmediately && index === 0) {
+        speakBlock(text);
+      } else {
+        const timer = window.setTimeout(() => {
+          speakBlock(text);
+        }, elapsed);
+
+        sessionTimers.push(timer);
+      }
+
+      elapsed += Math.round(estimateTextDuration(block.text) * NARRATION_SLOWDOWN) + (index < blocksToSpeak.length - 1 ? LINE_DELAY_MS : 0);
+    });
+
+    return stop;
+  }, []);
 
   useEffect(() => {
     if (!("speechSynthesis" in window)) {
       return;
     }
 
-    const synth = window.speechSynthesis;
-
     const updateVoice = () => {
-      voiceRef.current = selectBritishVoice(synth.getVoices());
+      voiceRef.current = selectBritishVoice(window.speechSynthesis.getVoices());
     };
 
     updateVoice();
-    synth.addEventListener?.("voiceschanged", updateVoice);
+    window.speechSynthesis.addEventListener?.("voiceschanged", updateVoice);
 
     return () => {
-      synth.removeEventListener?.("voiceschanged", updateVoice);
+      window.speechSynthesis.removeEventListener?.("voiceschanged", updateVoice);
     };
   }, []);
 
   useEffect(() => {
-    if (!("speechSynthesis" in window) || blocks.length === 0) {
+    if (!enabled || !("speechSynthesis" in window) || blocks.length === 0) {
       return;
     }
 
-    const synth = window.speechSynthesis;
-    let cancelled = false;
-    const timers: number[] = [];
-    const startDelayMs = 160;
-
-    synth.cancel();
-
-    let elapsed = startDelayMs;
-
-    blocks.forEach((block, index) => {
-      const text = block.text.trim();
-      if (!text) {
-        return;
+    const stop = speakBlocks(blocks, stepKey);
+    const retryTimer = window.setTimeout(() => {
+      const synth = window.speechSynthesis;
+      if (!synth.speaking && !synth.pending && lastSpokenKeyRef.current !== stepKey) {
+        speakBlocks(blocks, stepKey);
       }
-
-      const timer = window.setTimeout(() => {
-        if (cancelled) {
-          return;
-        }
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = STORY_VOICE_LANG;
-        utterance.rate = Math.max(1.35, Math.min(2.15, 2.15 - text.length / 220));
-        utterance.pitch = 1.02;
-        utterance.volume = 1;
-
-        const voice = voiceRef.current;
-        if (voice) {
-          utterance.voice = voice;
-        }
-
-        synth.speak(utterance);
-      }, elapsed);
-
-      timers.push(timer);
-      elapsed += estimateTextDuration(block.text) + (index < blocks.length - 1 ? LINE_DELAY_MS : 0);
-    });
+    }, 800);
 
     return () => {
-      cancelled = true;
-      timers.forEach((timer) => window.clearTimeout(timer));
-      synth.cancel();
+      window.clearTimeout(retryTimer);
+      stop?.();
     };
-  }, [blocks, stepKey]);
+  }, [blocks, enabled, speakBlocks, stepKey]);
+
+  return { speakBlocks, narrationStarted };
 }
 
 function ChartBars({
@@ -1052,6 +1076,46 @@ function StoryGraphicCard({ step, progress }: { step: StoryStep; progress: numbe
   );
 }
 
+function RareEarthCards({ cards, progress }: { cards: RareEarthCard[]; progress: number }) {
+  if (cards.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="story-rare-earths" aria-label="Rare earth element cards">
+      <div className="story-rare-earths-header">
+        <span className="story-rare-earths-kicker">Rare earth lens</span>
+        <span className="story-rare-earths-sub">Elements tied to the current geography</span>
+      </div>
+      <div className="story-rare-earths-grid">
+        {cards.map((card, index) => {
+          const reveal = clamp(progress * cards.length - index * 0.28);
+
+          return (
+            <article
+              key={card.symbol}
+              className="rare-earth-card"
+              style={{
+                opacity: 0.28 + reveal * 0.72,
+                borderColor: `${card.accent}55`
+              }}
+            >
+              <div className="rare-earth-card-top">
+                <span className="rare-earth-number">{card.atomicNumber}</span>
+                <span className="rare-earth-symbol" style={{ color: card.accent }}>
+                  {card.symbol}
+                </span>
+              </div>
+              <div className="rare-earth-name">{card.name}</div>
+              <div className="rare-earth-note">{card.note}</div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function CriticalMineralsStory() {
   const globeRef = useRef<GlobeHandle | null>(null);
   const idleTimerRef = useRef<number | null>(null);
@@ -1065,6 +1129,7 @@ export default function CriticalMineralsStory() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [interactionTick, setInteractionTick] = useState(0);
   const [globeReadyTick, setGlobeReadyTick] = useState(0);
+  const [presentationStarted, setPresentationStarted] = useState(false);
 
   const reducedMotion = useReducedMotion();
   const activeStep = STORY_STEPS[activeStepIndex];
@@ -1081,9 +1146,18 @@ export default function CriticalMineralsStory() {
   const { renderedLines, progress, cursorBlockIndex } = useTypewriter(
     typedBlocks,
     `${activeStepIndex}-${activeStep.title}`,
-    reducedMotion
+    reducedMotion,
+    presentationStarted
   );
-  useSpeechNarration(typedBlocks, `${activeStepIndex}-${activeStep.title}`);
+  const { speakBlocks, narrationStarted } = useSpeechNarration(
+    typedBlocks,
+    `${activeStepIndex}-${activeStep.title}`,
+    presentationStarted
+  );
+  const startNarration = () => {
+    setPresentationStarted(true);
+    speakBlocks(typedBlocks, `${activeStepIndex}-${activeStep.title}`, true);
+  };
 
   useEffect(() => {
     lastInteractionAtRef.current = Date.now();
@@ -1130,6 +1204,20 @@ export default function CriticalMineralsStory() {
     [countries]
   );
 
+  const europeFlagCountries = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          "FR",
+          "NO",
+          ...countryFeatures
+            .filter((country) => country.properties.CONTINENT === "Europe" && country.properties.ISO_A2 !== "RU")
+            .map((country) => country.properties.ISO_A2)
+        ])
+      ).filter((code) => code !== "AQ" && code !== "RU"),
+    [countryFeatures]
+  );
+
   const maxPopulation = useMemo(
     () => Math.max(1, ...countryFeatures.map((feature) => Number(feature.properties.POP_EST) || 0)),
     [countryFeatures]
@@ -1159,14 +1247,17 @@ export default function CriticalMineralsStory() {
     return materials;
   }, [colorScale, countryFeatures]);
 
-  const flagMaterials = useFlagMaterials(ALL_FLAG_COUNTRIES);
-  const activeFlagCountries = useMemo(() => new Set(activeStep.flagCountries), [activeStep.flagCountries]);
+  const flagMaterials = useFlagMaterials(Array.from(new Set([...ALL_FLAG_COUNTRIES, ...europeFlagCountries])));
+  const activeFlagCountries = useMemo(
+    () => new Set(activeStep.title === "Europe" ? europeFlagCountries : activeStep.flagCountries),
+    [activeStep.flagCountries, activeStep.title, europeFlagCountries]
+  );
   const polygonCapMaterial = useMemo(() => {
     return (feature: CountryFeature) => {
-      const code = feature.properties.ISO_A2;
+      const code = getPolygonFlagKey(feature);
       return (
         (activeFlagCountries.has(code) ? flagMaterials[code] : undefined) ??
-        defaultCapMaterials.get(code) ??
+        defaultCapMaterials.get(feature.properties.ISO_A2) ??
         new THREE.MeshPhongMaterial({ color: colorScale(Number(feature.properties.POP_EST) || 0), flatShading: true })
       );
     };
@@ -1179,6 +1270,17 @@ export default function CriticalMineralsStory() {
 
   const goToStep = (index: number) => {
     const normalized = (index + STORY_STEPS.length) % STORY_STEPS.length;
+    setPresentationStarted(true);
+    speakBlocks(
+      [
+        { kind: "title", text: STORY_STEPS[normalized].title },
+        { kind: "label", text: STORY_STEPS[normalized].label },
+        { kind: "description", text: STORY_STEPS[normalized].description },
+        ...STORY_STEPS[normalized].lines.map((text): StoryTextBlock => ({ kind: "body", text }))
+      ],
+      `${normalized}-${STORY_STEPS[normalized].title}`,
+      true
+    );
     setActiveStepIndex(normalized);
     markInteraction();
   };
@@ -1240,6 +1342,8 @@ export default function CriticalMineralsStory() {
       return undefined;
     }
 
+    controls.autoRotate = true;
+
     idleTimerRef.current = window.setTimeout(() => {
       const latestControls = globeRef.current?.controls?.();
       if (latestControls) {
@@ -1286,9 +1390,6 @@ export default function CriticalMineralsStory() {
         polygonsData={countryFeatures}
         onGlobeReady={() => setGlobeReadyTick((value) => value + 1)}
         polygonAltitude={(feature: CountryFeature) => (feature === hoverCountry ? 0.09 : 0.05)}
-        polygonCapColor={(feature: CountryFeature) =>
-          feature === hoverCountry ? "steelblue" : colorScale(Number(feature.properties.POP_EST) || 0)
-        }
         polygonCapMaterial={polygonCapMaterial}
         polygonSideColor={() => "rgba(0, 0, 0, 0.18)"}
         polygonStrokeColor={() => "#0f172a"}
@@ -1312,6 +1413,11 @@ export default function CriticalMineralsStory() {
           <div className="story-kicker">
             SECTION {String(activeStepIndex + 1).padStart(2, "0")} OF {String(STORY_STEPS.length).padStart(2, "0")}
           </div>
+          {activeStepIndex === 0 && !narrationStarted ? (
+            <button type="button" className="story-narration-trigger" onClick={startNarration}>
+              Click to start narration
+            </button>
+          ) : null}
         </div>
 
         <div className="story-terminal">
@@ -1351,6 +1457,7 @@ export default function CriticalMineralsStory() {
                 <span>{progress >= 1 ? "chart settled" : "chart building"}</span>
               </div>
             </div>
+            <RareEarthCards cards={activeStep.rareEarths} progress={progress} />
           </div>
         </div>
 

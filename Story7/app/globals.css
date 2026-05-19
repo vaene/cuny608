@@ -126,7 +126,7 @@ body {
   width: min(34vw, 30rem);
   border: 1px solid var(--story-border);
   border-radius: 1.75rem;
-  background: linear-gradient(180deg, rgba(8, 13, 22, 0.84), rgba(3, 7, 14, 0.72));
+  background: linear-gradient(180deg, rgba(8, 13, 22, 0.67), rgba(3, 7, 14, 0.58));
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   box-shadow: var(--story-shadow);
@@ -166,6 +166,26 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+.story-narration-trigger {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+  padding: 0.45rem 0.72rem;
+  border: 1px solid rgba(103, 232, 249, 0.28);
+  border-radius: 999px;
+  background: rgba(10, 17, 27, 0.76);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f5fbff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.story-narration-trigger:hover {
+  border-color: rgba(103, 232, 249, 0.48);
+  background: rgba(15, 24, 36, 0.88);
 }
 
 .story-hud {
@@ -336,7 +356,7 @@ body {
 .story-terminal-footer {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.8rem;
   padding: 0 1rem 1rem;
 }
 
@@ -375,6 +395,97 @@ body {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(191, 205, 224, 0.72);
+}
+
+.story-rare-earths {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.story-rare-earths-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.story-rare-earths-kicker {
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(191, 205, 224, 0.72);
+}
+
+.story-rare-earths-sub {
+  font-size: 0.64rem;
+  line-height: 1.4;
+  color: rgba(191, 205, 224, 0.58);
+  text-align: right;
+}
+
+.story-rare-earths-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
+.rare-earth-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-height: 5rem;
+  padding: 0.42rem 0.46rem 0.46rem;
+  border: 1px solid rgba(103, 232, 249, 0.18);
+  border-radius: 0.85rem;
+  background:
+    linear-gradient(180deg, rgba(9, 16, 26, 0.92), rgba(5, 10, 18, 0.94)),
+    radial-gradient(circle at top right, rgba(103, 232, 249, 0.08), transparent 40%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.rare-earth-card:hover {
+  transform: translateY(-1px);
+}
+
+.rare-earth-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.38rem;
+}
+
+.rare-earth-number {
+  font-family: var(--font-geist-mono), SFMono-Regular, Menlo, monospace;
+  font-size: 0.53rem;
+  letter-spacing: 0.18em;
+  color: rgba(191, 205, 224, 0.68);
+}
+
+.rare-earth-symbol {
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+
+.rare-earth-name {
+  font-size: 0.49rem;
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(239, 246, 255, 0.94);
+  overflow-wrap: anywhere;
+}
+
+.rare-earth-note {
+  margin-top: auto;
+  font-size: 0.53rem;
+  line-height: 1.18;
+  color: rgba(191, 205, 224, 0.8);
 }
 
 .story-dots {
@@ -848,6 +959,10 @@ body {
   .support-methods-card {
     grid-template-columns: 1fr;
   }
+
+  .story-rare-earths-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -862,6 +977,19 @@ body {
 
   .story-typed-copy {
     font-size: 0.92rem;
+  }
+
+  .story-rare-earths-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .story-rare-earths-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .story-rare-earths-sub {
+    text-align: left;
   }
 
   .story-terminal-path {
